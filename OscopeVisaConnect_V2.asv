@@ -22,3 +22,4 @@ end
 %get(Wavesurfer510.Acquisition,'T
 %template2 = query(VisaInterface, 'TEMPLATE?');
 
+fwrite(VisaInterface,"VBS 'app.Memory.M1.)
