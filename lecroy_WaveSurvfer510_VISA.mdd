@@ -115,9 +115,9 @@ for i=1:length(templateStruct)
     idx = strmatch(templateStruct(i).type, templateValues);
     if ~isempty(idx)
         templateStruct(i).type = matlabValues{idx};
-        templateStruct(i).MatlabConversion = true;
-    else
-        templateStruct(i).MatlabConversion = false;
+        %templateStruct(i).MatlabConversion = true;
+    %else
+        %templateStruct(i).MatlabConversion = false;
     end
 end
 
