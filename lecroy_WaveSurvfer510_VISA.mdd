@@ -5226,7 +5226,6 @@ sampleElement = cast(1, type);
 sampleElementProperties = whos('sampleElement');
 elementSize = sampleElementProperties.bytes;
 
-else
     % Read one less than the InputBufferSize to allow us to check for EOI
     elementsToRead = get(interface, 'InputBufferSize')/elementSize; 
     msg = [];
@@ -5241,7 +5240,7 @@ else
     end
     
     % TODO: If the msg was not a timeout or EOI, it should be reported.
-end
+
 
 %data = cast(data, type);
     </MCode>
@@ -5648,19 +5647,25 @@ y = [];
 x = [];
 yunit = 'unknown';
 xunit = 'unknown';
+ygain = 'unknown';
+yintercept = 'unknown';
+length = 'unknown';
+xinterval = 'unknown';
+xintercept = 'unknown';
+Info = struct();
  
 % checks to see if the source input is a valid value
-validValues = {'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD', 'M1', 'M2', 'M3', 'M4',};
-scopeValues = {'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD', 'M1', 'M2', 'M3', 'M4',};
-idx = strmatch(source,validValues, 'exact');
+%validValues = {'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD', 'M1', 'M2', 'M3', 'M4'};
+%scopeValues = {'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD', 'M1', 'M2', 'M3', 'M4'};
+%idx = strmatch(source,validValues, 'exact');
 
 % gives error if the channel is not a valid value
-if (isempty(idx))
-    error('Invalid SOURCE. CHANNEL must be one of: C1, C2, C3, C4, TA, TB, TC, TD, M1, M2, M3, M4');
-end
+% if (isempty(idx))
+%     error('Invalid SOURCE. CHANNEL must be one of: C1, C2, C3, C4, TA, TB, TC, TD, M1, M2, M3, M4');
+% end
 
 % sets the source to its property value
-trueSource = scopeValues{idx};
+trueSource = source%scopeValues{idx};
 
 % checks to see if the scale entered is a valid value
 if exist('scaleWaveform', 'var')
@@ -5693,13 +5698,13 @@ if strcmp(oldPrecision,'int8')
         raw = invoke(util, 'readbin', 'int8');
 
         % separates the data from the descriptor block 
-        y = raw(362:end');
-        %header = raw(1:361)';
+       
         header = raw(1:361)';
+        y = raw(362:end)';
     catch
         % return the settings back to what the user had them and display
         % an error that tells why the waveform was not read
-        set(obj, 'Precision', oldPrecision);
+        %set(obj, 'Precision', oldPrecision);
         set(obj, 'ByteOrder', oldByteOrder);
         error(lasterr)  
     end
@@ -5719,7 +5724,7 @@ if strcmp(oldPrecision,'int8')
          invoke(util, 'sendcommand', to_interface);
  
          % get wave from the instrument
-         raw = invoke(util, 'readbin', 'int8');
+         raw = invoke(util, 'readbin', 'int16');
  
          % separates the data from the descriptor block 
          header = raw';
@@ -5729,7 +5734,7 @@ if strcmp(oldPrecision,'int8')
  
          % get wave from the instrument
          raw = invoke(util, 'readbin', 'int16');
- 
+                
          % separates the data from the descriptor block 
          y = raw(9:end)';
 %          %then get the data
@@ -5763,11 +5768,11 @@ else
 end
 
 
-xunit=wd.getHORUNIT(header);
-yunit=wd.getVERTUNIT(header);
+xunit = wd.getHORUNIT(header);
+yunit = wd.getVERTUNIT(header);
 ygain = wd.getVERTICAL_GAIN(header);
-yintercept =wd.getVERTICAL_OFFSET(header)
-length = wd.getWAVE_ARRAY_COUNT(header));
+yintercept =wd.getVERTICAL_OFFSET(header);
+length = wd.getWAVE_ARRAY_COUNT(header);
 xinterval = wd.getHORIZ_INTERVAL(header);
 xintercept = wd.getHORIZ_OFFSET(header);
 Info = struct('xunit',xunit,'yunit',yunit,'ygain',ygain,'yintercept',yintercept,'length',length,'xinterval',xinterval,'xintercept',xintercept)
