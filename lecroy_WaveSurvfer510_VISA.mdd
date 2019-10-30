@@ -31,7 +31,6 @@ driverData.header = [];
 % This driver will work with either TCPIP or GPIB.
 interface = get(obj, 'Interface');
 interfaceClass = class(interface);
-driverData.isTcpip = strcmp('tcpip', interfaceClass);
 
 % Save the DriverData
 set(obj, 'DriverData', driverData);</Code>
@@ -116,6 +115,9 @@ for i=1:length(templateStruct)
     idx = strmatch(templateStruct(i).type, templateValues);
     if ~isempty(idx)
         templateStruct(i).type = matlabValues{idx};
+        templateStruct(i).MatlabConversion = true;
+    else
+        templateStruct(i).MatlabConversion = false;
     end
 end
 
@@ -157,7 +159,9 @@ driverData.wd.getVERTUNIT         = makeTextParser(makeTemplateParser(wd.VERTUNI
 %added functions to increase wf? options
 driverData.wd.getCOMM_TYPE  = makeTemplateParser(wd.COMM_TYPE);
 driverData.wd.getWAVE_ARRAY_1  = makeTemplateParser(wd.WAVE_ARRAY_1);
-driverData.wd.getWAVE_DESCRIPTOR  = makeTemplateParser(wd.WAVE_DESCRIPTOR);
+%driverData.wd.getWAVE_DESCRIPTOR  = makeTemplateParser(wd.WAVE_DESCRIPTOR);
+driverData.wd.getWAVE_ARRAY_COUNT  = makeTemplateParser(wd.WAVE_ARRAY_COUNT);
+
 set(obj, 'DriverData', driverData);
 
  
@@ -5148,11 +5152,15 @@ invoke(util, 'sendcommand', to_interface)</SetMCode>
 % If this is a group function, OBJ is the group object. If
 % it a base device function, OBJ is the device object.
 
-invoke(get(get(obj, 'Parent'), 'Util'), 'sendcommand', '*TRG');</MCode>
+invoke(get(get(obj, 'Parent'), 'Util'), 'sendcommand', 'FRTR');</MCode>
                </Code>
                <Description>TRIGGER Trigger the instrument.
 
-INVOKE(OBJ,'TRIGGER') performs a Group Execute trigger.</Description>
+INVOKE(OBJ,'TRIGGER') performs a Group Execute trigger.
+
+Use: set(Wavesurfer510.Acquisition(1), 'Control', 'single'); to get this to work, also try *TRG instead of FRTR depending on your scope
+
+Use set(Waveform,'Precision','int16'); before transfer to switch to 16 transfer mode and increase persision for transfer (you'd be better off guessing the voltage into your scope by licking the wires than using 8 bit transfer). if fact I've added this to the initial setup just so I don't have to do it every time.</Description>
             </Method>
          </MethodInfo>
       </Group>
@@ -5166,105 +5174,6 @@ INVOKE(OBJ,'TRIGGER') performs a Group Execute trigger.</Description>
          </Mappings>
          <PropertyInfo/>
          <MethodInfo>
-            <Method>
-               <Name>buildheader</Name>
-               <Location>util</Location>
-               <CapabilityGroup>Base</CapabilityGroup>
-               <Type>MCode</Type>
-               <Code>
-                  <MCode>function header = buildheader(obj, msgLength, operationFlags, sequenceNumber)
-%BUILDHEADER Builds the LeCroy VICP header
-% 
-% Usage:
-%   header = buildheader(msgLength,{{operationFlag},{sequenceNumber}});
-%
-%   msgLength is the length of the message you want to send.
-%   operationFlags {optional} is a structure holding the operation
-%           information of DATA,REMOTE,LOCKOUT,CLEAR,SRQ,SERIALPOLL,EOI.
-%           It may be passes as an empty array or struct.
-%   sequenceNumber {optional} is the sequence of data when splitting data
-%           across packets.
-%
-%   header is the 8 byte header needed for the message 
-%
-% VICP Headers:
-%
-%	    Byte	Description
-%	    ------------------------------------------------
-%		 0		Operation
-%		 1		Version		1 = version 1
-%		 2		Sequence Number { 1..255 }, (was unused until June 2003)
-%		 3		Unused
-%	 	 4		Block size, MSB	 (not including this header)
-%		 5		Block size
-%		 6		Block size
-%		 7		Block size, LSB
-
-    operationStruct.Data = true;        % This is always true but leaving it for consistency
-    operationStruct.Remote = false;     % Remote control 
-    operationStruct.Lockout = false;    % Lockout front panel
-    operationStruct.Clear = false;      % Clear
-    operationStruct.SRQ = false;        %
-    operationStruct.SerialPoll = false; %
-    operationStruct.EOI = true;         % End Of Message
-
-    % With no arguments, return the default header parameters.
-    if ~exist('msgLength', 'var')
-        header = operationStruct;
-        return
-    end
-
-    % If flags are passed, use them in place of the defualts.  
-    if (exist('operationFlags','var') &amp;&amp; ~isempty(operationFlags))
-        names = fieldnames(operationFlags);
-        for field=names
-            operationStruct.(field) = operationFlags.(field);
-        end
-    end
-
-    % If user did not specify the SequenceNumber then defualt to 1.
-    if ~exist('sequenceNumber', 'var')
-        sequenceNumber = 1;             
-    end
-
-    % Build Operation Flag for header
-    operation =   uint8(0);
-    operation =	bitset(operation,8,operationStruct.Data);       % 0x80 Data block
-    operation =	bitset(operation,7,operationStruct.Remote);     % 0x40 Remote Mode
-    operation =	bitset(operation,6,operationStruct.Lockout);    % 0x20 Local Lockout (Lockout front panel)
-    operation =	bitset(operation,5,operationStruct.Clear);      % 0x10 Device Clear (if sent with data, clear occurs before block is passed to parser)
-    operation =	bitset(operation,4,operationStruct.SRQ);        % 0x08 SRQ (Device -&gt; PC only)
-    operation =	bitset(operation,3,operationStruct.SerialPoll); % 0x04 SerialPoll
-    operation =	bitset(operation,1,operationStruct.EOI);        % 0x01 Block terminated in EOI
-
-    header = zeros(1,8,'uint8');        % Initialize header size
-    header(1) = operation;              % Operation Byte
-    header(2) = uint8(1);               % Version
-    header(3) = uint8(sequenceNumber);  % Seq
-    header(4) = 0;                      % Reserved
-
-    % Build the length info for header
-    for i=1:4
-        placeValue = 256^(4-i);
-        header(4+i) = uint8(floor(msgLength/placeValue));
-        msgLength = mod(msgLength, placeValue);
-    end
-    header = char(header);
-</MCode>
-               </Code>
-               <Description>BUILDHEADER Builds the LeCroy VICP header
- 
- Usage:
-   header = INVOKE(obj, 'buildheader', msgLength,{{operationFlag},{sequenceNumber)));
-
-   msgLength is the length of the message you want to send.
-   operationFlags {optional} is a structure holding the operation
-           information of DATA,REMOTE,LOCKOUT,CLEAR,SRQ,SERIALPOLL,EOI.
-   sequenceNumber {optional} is the sequence of data when splitting data
-           across packets.
-
-   header is the 8 byte header needed for the message </Description>
-            </Method>
             <Method>
                <Name>getproperty</Name>
                <Location>util</Location>
@@ -5294,81 +5203,6 @@ end</MCode>
                <Description/>
             </Method>
             <Method>
-               <Name>parseheader</Name>
-               <Location>util</Location>
-               <CapabilityGroup>Base</CapabilityGroup>
-               <Type>MCode</Type>
-               <Code>
-                  <MCode>function [msgLength, operationFlags, sequenceNumber] = parseheader(obj, header)
-%PARSEVICPHEADER Parses the LeCroy VICP header
-%
-% Usage:
-%   [msgLength, operationalFlags, sequenceNumber] = parseVicpHeader(header);
-%
-%   header is the 8 byte message header from a LeCroy VICP message.  
-%
-%   msgLength is the length in bytes of the accompanying message.
-%   operationFlags is a structure holding the operation
-%           information of DATA,REMOTE,LOCKOUT,CLEAR,SRQ,SERIALPOLL,EOI.
-%   sequenceNumber is the sequence of data when splitting data
-%           across packets.
-%
-% VICP Headers:
-%
-%	    Byte	Description
-%	    ------------------------------------------------
-%		 0		Operation
-%		 1		Version		1 = version 1
-%		 2		Sequence Number { 1..255 }, (was unused until June 2003)
-%		 3		Unused
-%	 	 4		Block size, MSB	 (not including this header)
-%		 5		Block size
-%		 6		Block size
-%		 7		Block size, LSB
-
-    % The header must be 8 bytes
-    headerLength = 8;
-    if length(header)~=headerLength
-        error('parseheader::Invalid header argument.  Header must be 8 bytes.')
-    end
-    
-    % Extract the distinct portions of the header
-    operation = uint8(header(1));       % Operation Byte
-    version   = double(header(2));      % Version
-    sequenceNumber = double(header(3));	% Seq
-    %header(4);                         % Reserved and unused
-    
-    % Parse the operation
-    operationFlags.Data    = bitget(operation,8);    % 0x80 Data block
-    operationFlags.Remote  = bitget(operation,7);    % 0x40 Remote Mode
-    operationFlags.Lockout = bitget(operation,6);    % 0x20 Local Lockout (Lockout front panel)
-    operationFlags.Clear   = bitget(operation,5);    % 0x10 Device Clear (if sent with data, clear occurs before block is passed to parser)
-    operationFlags.SRQ     = bitget(operation,4);    % 0x08 SRQ (Device -&gt; PC only)
-    operationFlags.SerialPoll = bitget(operation,3); % 0x04 SerialPoll
-    operationFlags.EOI     = bitget(operation,1);    % 0x01 Block terminated in EOI
-
-    % Parse the length
-    msgLength = 0;
-    for i=1:4
-        msgLength = msgLength + header(i+4)*256^(4-i);
-    end
-    
-</MCode>
-               </Code>
-               <Description>PARSEHEADER Parses the LeCroy VICP header
-
- Usage:
-   [msgLength, operationalFlags, sequenceNumber] = INVOKE(obj, 'parseheader', header);
-
-   header is the 8 byte message header from a LeCroy VICP message.  
-
-   msgLength is the length in bytes of the accompanying message.
-   operationFlags is a structure holding the operation
-           information of DATA,REMOTE,LOCKOUT,CLEAR,SRQ,SERIALPOLL,EOI.
-   sequenceNumber is the sequence of data when splitting data
-           across packets.</Description>
-            </Method>
-            <Method>
                <Name>readbin</Name>
                <Location>util</Location>
                <CapabilityGroup>Base</CapabilityGroup>
@@ -5391,23 +5225,6 @@ data = [];
 sampleElement = cast(1, type);
 sampleElementProperties = whos('sampleElement');
 elementSize = sampleElementProperties.bytes;
-
-if driverData.isTcpip
-%RECEIVEVICPMESSAGE receive the message using LeCroy's VCIP packet format
-%
-% Usage:
-%   message = receiveVicpMessage(tcpipObj)
-
-    EOI = false;
-    headerLength = 8;
-    % Read and concatenate until an EOI is found.
-    while ~EOI
-        header = fread(interface, headerLength, 'uint8');
-        [dataLength, operationFlags, sequenceNumber] = invoke(obj, 'parseheader', header);
-        dataLength = dataLength/elementSize;
-        data = [data; fread(interface, dataLength, type)];
-        EOI = operationFlags.EOI;
-    end
 
 else
     % Read one less than the InputBufferSize to allow us to check for EOI
@@ -5509,24 +5326,8 @@ driverData = get(device, 'driverData');
 %get the interface
 interface = get(device, 'Interface');
 
-if driverData.isTcpip
-    MAXPACKET = 2^10;
 
-    % Check for correct size of msg
-    if 1~=min(size(data))
-        error('MSG must be a vector.')
-    end
-
-%     if length(data)&gt;MAXPACKET
-%         error('We currently only support sending messages under 2k long');
-%     end
-
-    header = invoke(obj, 'buildheader', length(data));
-    fwrite(interface, [header,data], type);
-    
-else
-    fwrite(interface, data, type);
-end</MCode>
+fwrite(interface, data, type);</MCode>
                </Code>
                <Description/>
             </Method>
@@ -5832,7 +5633,7 @@ invoke(util, 'sendcommand', to_interface)
                <CapabilityGroup>Base</CapabilityGroup>
                <Type>MCode</Type>
                <Code>
-                  <MCode>function [y, x, yunit, xunit, header] = readwaveform(obj, source, scaleWaveform)
+                  <MCode>function [y, x, Info] = readwaveform(obj, source, scaleWaveform)
 % If this is a group function, OBJ is the group object. If
 % it a base device function, OBJ is the device object.
 
@@ -5849,13 +5650,13 @@ yunit = 'unknown';
 xunit = 'unknown';
  
 % checks to see if the source input is a valid value
-validValues = {'channel1','channel2','channel3','channel4','traceA','traceB','traceC','traceD','memory1','memory2','memory3','memory4'};
+validValues = {'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD', 'M1', 'M2', 'M3', 'M4',};
 scopeValues = {'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD', 'M1', 'M2', 'M3', 'M4',};
 idx = strmatch(source,validValues, 'exact');
 
 % gives error if the channel is not a valid value
 if (isempty(idx))
-    error('Invalid SOURCE. CHANNEL must be one of: channel1, channel2, channel3, channel4,traceA, traceB, traceC, traceD, memory1, memory2, memory3 , memory4');
+    error('Invalid SOURCE. CHANNEL must be one of: C1, C2, C3, C4, TA, TB, TC, TD, M1, M2, M3, M4');
 end
 
 % sets the source to its property value
@@ -5914,17 +5715,23 @@ if strcmp(oldPrecision,'int8')
   elseif strcmp(oldPrecision,'int16')
      try 
          % Issue the Header transfer command.
-         to_interface = sprintf('%s:WaveForm? ALL',trueSource);
+         to_interface = sprintf('%s:WaveForm? DESC',trueSource);
          invoke(util, 'sendcommand', to_interface);
  
          % get wave from the instrument
          raw = invoke(util, 'readbin', 'int8');
  
          % separates the data from the descriptor block 
-         header = raw(1:361)';
-         for i=1:floor((length(raw)-362)/2);
-            y(i)=raw(362+(i-1)*2)*256+raw((363+(i-1)*2))';
-         end
+         header = raw';
+         
+         to_interface = sprintf('%s:WaveForm? DAT1',trueSource);
+         invoke(util, 'sendcommand', to_interface);
+ 
+         % get wave from the instrument
+         raw = invoke(util, 'readbin', 'int16');
+ 
+         % separates the data from the descriptor block 
+         y = raw(9:end)';
 %          %then get the data
 %          to_interface = sprintf('%s:WaveForm? WAVE_ARRAY_1',trueSource);
 %          invoke(util, 'sendcommand', to_interface);
@@ -5952,13 +5759,18 @@ if strcmp(oldPrecision,'int8')
          error('An error occurred while reading the waveform.');
      end
 else
-  error('Ascii prcsision not allowed for WF transfer');
+  error('Ascii precsision not allowed for WF transfer');
 end
 
 
 xunit=wd.getHORUNIT(header);
 yunit=wd.getVERTUNIT(header);
-
+ygain = wd.getVERTICAL_GAIN(header);
+yintercept =wd.getVERTICAL_OFFSET(header)
+length = wd.getWAVE_ARRAY_COUNT(header));
+xinterval = wd.getHORIZ_INTERVAL(header);
+xintercept = wd.getHORIZ_OFFSET(header);
+Info = struct('xunit',xunit,'yunit',yunit,'ygain',ygain,'yintercept',yintercept,'length',length,'xinterval',xinterval,'xintercept',xintercept)
 % Rescale the waveform is requested.
 if scale
     % rescale the Y
@@ -5979,9 +5791,9 @@ set(obj, 'ByteOrder', oldByteOrder);
                </Code>
                <Description>READWAVEFORM Transfer waveforms from the oscilloscope to MATLAB.
 
-[Y, T, XUNIT, YUNIT, HEADER] = INVOKE(obj, 'readwaveform', CHANNEL) returns a waveform from the instrument,
-using channel string, CHANNEL.  Valid channel values are channel&amp;lt;x&amp;gt;, trace&amp;lt;x&amp;gt;, and
-memory&amp;lt;z&amp;gt;, where &amp;lt;x&amp;gt; is a number between 1 and the number of channels on the instrument,  &amp;lt;y&amp;gt; is a letter between A and the number of reference channels on the instrument, and &amp;lt;z&amp;gt; is a number between 1 and the number of memory locations on the instrument.
+[y, x, Info] = INVOKE(obj, 'readwaveform', CHANNEL) returns a waveform from the instrument,
+using channel string, CHANNEL.  Valid channel values are C&amp;lt;x&amp;gt;, T&amp;lt;x&amp;gt;, and
+M&amp;lt;z&amp;gt;, where &amp;lt;x&amp;gt; is a number between 1 and the number of channels on the instrument,  &amp;lt;y&amp;gt; is a letter between A and the number of reference channels on the instrument, and &amp;lt;z&amp;gt; is a number between 1 and the number of memory locations on the instrument.
 
 [Y, T, XUNIT, YUNIT, HEADER] = INVOKE(obj, 'readwaveform', CHANNEL, SCALE) returns the data scaled to real units if SCALE is true, or as raw data if SCALE is false.  The default value for SCALE is true.
 
@@ -5994,7 +5806,7 @@ verify that it is large enough.  The size must be greater than two times the num
 of points in the waveform, plus approximately 50 bytes for header information.
 
 Example:
-	[y, t] = invoke(obj, 'readwaveform', 'channel1');
+	[y, t] = invoke(obj, 'readwaveform', 'C1');
 	[y, t] = invoke(obj, 'readwaveform', 'referenceA', false);
 
 Example changing the buffer size:
@@ -6026,16 +5838,16 @@ scopeValuesC = {'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD'};
 scopeValuesM = {'M1', 'M2', 'M3', 'M4'};
 
 % checks to see if location is a valid value
-idxM = strmatch(lower(location), {'memory1','memory2','memory3','memory4'}, 'exact');
+idxM = strmatch(lower(location), {'M1', 'M2', 'M3', 'M4'}, 'exact');
 if (isempty(idxM))
-    error('Invalid value.LOCATION must be one of: memory1, memory2, memory3, memory4');
+    error('Invalid value.LOCATION must be one of: M1, M2, M3, M4');
 end
 trueLocation = scopeValuesM{idxM};
 
 % checks to see if channel is a valid value
-idxC = strmatch(lower(channel),{'channel1','channel2','channel3','channel4','tracea','traceb','tracec','traced'} , 'exact');
+idxC = strmatch(lower(channel),{'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD'} , 'exact');
 if (isempty(idxC))
-    error('Invalid value.CHANNEL must be one of: channel1, channel2, channel3, channel4, traceA, traceB, traceC, traceD');
+    error('Invalid value.CHANNEL must be one of: C1, C2, C3, C4, TA, TB, TC, TD');
 end
 trueChannel = scopeValuesC{idxC};
 
@@ -6050,7 +5862,7 @@ invoke(util, 'sendcommand', to_interface)</MCode>
 INVOKE(OBJ, 'storewaveform', CHANNEL, LOCATION) saves the waveform from CHANNEL to memory location, LOCATION.
 
 Example:
-	invoke(obj, 'storewaveform', 'channel1','memory1');
+	invoke(obj, 'storewaveform', 'C1','M1');
 	</Description>
             </Method>
          </MethodInfo>
