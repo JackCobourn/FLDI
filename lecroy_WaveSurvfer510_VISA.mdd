@@ -5724,10 +5724,10 @@ if strcmp(oldPrecision,'int8')
          invoke(util, 'sendcommand', to_interface);
  
          % get wave from the instrument
-         raw = invoke(util, 'readbin', 'int16');
+         raw = invoke(util, 'readbin', 'int8');
  
          % separates the data from the descriptor block 
-         header = raw';
+         header = raw(2:end)'; %deals with the fact that All is schorter than DESC, which is what the template parser expects, andwhich I don't want to rewrite.
          
          to_interface = sprintf('%s:WaveForm? DAT1',trueSource);
          invoke(util, 'sendcommand', to_interface);
@@ -5771,11 +5771,11 @@ end
 xunit = wd.getHORUNIT(header);
 yunit = wd.getVERTUNIT(header);
 ygain = wd.getVERTICAL_GAIN(header);
-yintercept =wd.getVERTICAL_OFFSET(header);
+yintercept = wd.getVERTICAL_OFFSET(header);
 length = wd.getWAVE_ARRAY_COUNT(header);
 xinterval = wd.getHORIZ_INTERVAL(header);
 xintercept = wd.getHORIZ_OFFSET(header);
-Info = struct('xunit',xunit,'yunit',yunit,'ygain',ygain,'yintercept',yintercept,'length',length,'xinterval',xinterval,'xintercept',xintercept)
+Info = struct('xunit',xunit,'yunit',yunit,'ygain',ygain,'yintercept',yintercept,'length',length,'xinterval',xinterval,'xintercept',xintercept);
 % Rescale the waveform is requested.
 if scale
     % rescale the Y
