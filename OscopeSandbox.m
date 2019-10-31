@@ -1,5 +1,5 @@
 %% Oscope v2
-function VisaInterface = OscopeVisa(~)
+%function VisaInterface = OscopeVisa(~)
 
 %connect to the oscope with all of: matlab connection to NI Visa, NI Visa,
 %and Lecroy connection to Ni Visa
@@ -78,6 +78,15 @@ end
 % where all of the fields in the waveform are regardless of changes to
 % the scope.  
 template = query(VisaInterface, 'TEMPLATE?');
+
+%% Test Memory Time
+tic
+y= invoke(Waveform,'readwaveform','C3');
+toc
+tic
+invoke(Waveform,'storewaveform','C3','M2');
+toc
+y2 = invoke(Waveform,'readwaveform','M2');
 
 %% Learn to proceess template
 idxWaveDesc = regexp(template,'(WAVEDESC: BLOCK)|(ENDBLOCK)','start'); %find the index where the actual description starts

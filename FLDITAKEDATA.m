@@ -7,8 +7,10 @@ x_loc= 14.6.*10;
 d=(3/16).*25.4;
 JetPos = x_loc./d;
 %% Connect scope
-[VisaInterface, Wavesurfer510] = OscopeVisaConnect_V2();
-ACQ = Wavesurfer510.Acquisition;
+[VisaInterface, Wavesurfer510] = OscopeVisaConnect_V2(); %get interface and device
+VSA = VisaInterface; %simplify code with shorthands
+SCP = Wavesurfer510;
+ACQ = Wavesurfer510.Acquisition; %simplify code with shorthands
 TRG = Wavesurfer510.Trigger;
 WVE = Wavesurfer510.Waveform;
 %% Connect and home motor
