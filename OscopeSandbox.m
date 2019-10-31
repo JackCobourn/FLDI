@@ -1,5 +1,5 @@
 %% Oscope v2
-function VisaInterface = OscopeVisa(~)
+%function VisaInterface = OscopeVisa(~)
 
 %connect to the oscope with all of: matlab connection to NI Visa, NI Visa,
 %and Lecroy connection to Ni Visa
@@ -43,6 +43,7 @@ MAX_HEADER = 1e3;
 memorySize = str2num(query(VisaInterface, 'Memory_SIZe?'));
 bufferSize = 2*(memorySize+MAX_HEADER);
 
+
 %close the connection, change the buffers, and re open
 fclose(VisaInterface)
 VisaInterface.InputBufferSize = bufferSize;
@@ -53,12 +54,39 @@ sampleElement = cast(1, 'int8');
 sampleElementProperties = whos('sampleElement');
 elementSize = sampleElementProperties.bytes;
 elementsToRead = get(VisaInterface, 'InputBufferSize')/elementSize; 
+
+query(VisaInterface, 'CFMT?')
+
+%fwrite(VisaInterface,"VBS 'app.Memory.M1.Out.Result.DataArray'")
+fwrite(VisaInterface,"VBS? 'return=app.acquisition.C3.Out.Result.DataArray'")
+fwrite(VisaInterface,"VBS? 'return=app.acquisition.C3.Out.Result.HorizontalOffset'")
+
+%fwrite(VisaInterface, "M1:WF? ALL")
+%fwrite(VisaInterface, "M1:WF? DESC")
+fwrite(VisaInterface, "M1:WF? DAT1")
+msg = [];
+data = [];
+while isempty(msg) %(~strcmp(msg, foundEoiMsg) || isempty(findstr(msg, timeoutSubMsg)))
+        [newData, count, msg] = fread(VisaInterface, elementsToRead, 'int8');
+        data = [data; newData];
+end
+
+
 %Check out what the waveform template looks like
 %LeCroy scopes publish the format of the waveform (WAVEDESC) with the 
 % TEMPLATE? query.  By reading and parsing that, the code can determine
 % where all of the fields in the waveform are regardless of changes to
 % the scope.  
 template = query(VisaInterface, 'TEMPLATE?');
+
+%% Test Memory Time
+tic
+y= invoke(Waveform,'readwaveform','C3');
+toc
+tic
+invoke(Waveform,'storewaveform','C3','M2');
+toc
+y2 = invoke(Waveform,'readwaveform','M2');
 
 %% Learn to proceess template
 idxWaveDesc = regexp(template,'(WAVEDESC: BLOCK)|(ENDBLOCK)','start'); %find the index where the actual description starts
