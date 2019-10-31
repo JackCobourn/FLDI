@@ -19,7 +19,13 @@ end
 %set(Waveform,'Precision','int8')
 %[Y1,X1,YUNIT1,XUNIT1,HEADER1] = invoke(Waveform,'readwaveform','channel3');
 %set(Waveform,'Precision','int16');
+tic
 y= invoke(Waveform,'readwaveform','C3');
+toc
+tic
+invoke(Waveform,'storewaveform','C3','M2');
+toc
+y2 = invoke(Waveform,'readwaveform','M2');
 %set(Waveform,'Precision','int16')
 %[Y2,X2,YUNIT2,XUNIT2,HEADER2] = invoke(Waveform,'readwaveform','channel3');
 
@@ -113,7 +119,7 @@ if strcmp(oldPrecision,'int8')
          raw = invoke(util, 'readbin', 'int8');
  
          % separates the data from the descriptor block 
-         header = raw(2:end)';
+         header = raw(2:end)'; %deals with the fact that 
          
          to_interface = sprintf('%s:WaveForm? DAT1',trueSource);
          invoke(util, 'sendcommand', to_interface);

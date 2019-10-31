@@ -19,7 +19,13 @@ end
 %set(Waveform,'Precision','int8')
 %[Y1,X1,YUNIT1,XUNIT1,HEADER1] = invoke(Waveform,'readwaveform','channel3');
 %set(Waveform,'Precision','int16');
+tic
 y= invoke(Waveform,'readwaveform','C3');
+toc
+tic
+invoke(Waveform,'storewaveform','C3','M2');
+toc
+y2 = invoke(Waveform,'readwaveform','M2');
 %set(Waveform,'Precision','int16')
 %[Y2,X2,YUNIT2,XUNIT2,HEADER2] = invoke(Waveform,'readwaveform','channel3');
 
