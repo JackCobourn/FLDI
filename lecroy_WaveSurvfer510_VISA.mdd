@@ -5665,7 +5665,7 @@ if (isempty(idx))
 end
 
 %sets the source to its property value
-trueSource = source%scopeValues{idx};
+trueSource = scopeValues{idx};
 
 % checks to see if the scale entered is a valid value
 if exist('scaleWaveform', 'var')
