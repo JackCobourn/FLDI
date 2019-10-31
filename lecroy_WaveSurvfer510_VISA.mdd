@@ -5654,18 +5654,18 @@ xinterval = 'unknown';
 xintercept = 'unknown';
 Info = struct();
  
-checks to see if the source input is a valid value
+%checks to see if the source input is a valid value
 validValues = {'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD', 'M1', 'M2', 'M3', 'M4'};
 scopeValues = {'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD', 'M1', 'M2', 'M3', 'M4'};
 idx = strmatch(source,validValues, 'exact');
 
-gives error if the channel is not a valid value
+%gives error if the channel is not a valid value
 if (isempty(idx))
     error('Invalid SOURCE. CHANNEL must be one of: C1, C2, C3, C4, TA, TB, TC, TD, M1, M2, M3, M4');
 end
 
-sets the source to its property value
-trueSource = scopeValues{idx};
+%sets the source to its property value
+trueSource = source%scopeValues{idx};
 
 % checks to see if the scale entered is a valid value
 if exist('scaleWaveform', 'var')
