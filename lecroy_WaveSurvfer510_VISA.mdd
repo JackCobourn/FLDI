@@ -5843,14 +5843,14 @@ scopeValuesC = {'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD'};
 scopeValuesM = {'M1', 'M2', 'M3', 'M4'};
 
 % checks to see if location is a valid value
-idxM = strmatch(lower(location), {'M1', 'M2', 'M3', 'M4'}, 'exact');
+idxM = strmatch(location, {'M1', 'M2', 'M3', 'M4'}, 'exact');
 if (isempty(idxM))
     error('Invalid value.LOCATION must be one of: M1, M2, M3, M4');
 end
 trueLocation = scopeValuesM{idxM};
 
 % checks to see if channel is a valid value
-idxC = strmatch(lower(channel),{'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD'} , 'exact');
+idxC = strmatch(channel,{'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD'} , 'exact');
 if (isempty(idxC))
     error('Invalid value.CHANNEL must be one of: C1, C2, C3, C4, TA, TB, TC, TD');
 end
