@@ -5713,8 +5713,8 @@ if strcmp(oldPrecision,'int8')
     if (isempty(raw))
         % returns the settings back to what the user had them and displays
         % an error that the waveform did not get read in
-        set(obj, 'Precision', oldPrecision);
-        set(obj, 'ByteOrder', oldByteOrder);
+        %set(obj, 'Precision', oldPrecision);
+        %set(obj, 'ByteOrder', oldByteOrder);
         error('An error occurred while reading the waveform.');
     end
   elseif strcmp(oldPrecision,'int16')
@@ -5760,7 +5760,7 @@ if strcmp(oldPrecision,'int8')
          % returns the settings back to what the user had them and displays
          % an error that the waveform did not get read in
          %set(obj, 'Precision', oldPrecision);
-         set(obj, 'ByteOrder', oldByteOrder);
+         %set(obj, 'ByteOrder', oldByteOrder);
          error('An error occurred while reading the waveform.');
      end
 else
@@ -5791,7 +5791,7 @@ y = y';
 
 % Restore initial settings
 %set(obj, 'Precision', oldPrecision);
-set(obj, 'ByteOrder', oldByteOrder);
+%set(obj, 'ByteOrder', oldByteOrder);
     </MCode>
                </Code>
                <Description>READWAVEFORM Transfer waveforms from the oscilloscope to MATLAB.
