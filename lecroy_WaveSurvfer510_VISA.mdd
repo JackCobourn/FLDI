@@ -5790,7 +5790,7 @@ x = x';
 y = y';
 
 % Restore initial settings
-set(obj, 'Precision', oldPrecision);
+%set(obj, 'Precision', oldPrecision);
 set(obj, 'ByteOrder', oldByteOrder);
     </MCode>
                </Code>
