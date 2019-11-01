@@ -85,9 +85,8 @@ tic
 toc
 tic
 invoke(WVE,'storewaveform','C3','M2');
-toc
 [y2,~,info2] = invoke(WVE,'readwaveform','M2',false);
-
+toc
 %% Learn to proceess template
 idxWaveDesc = regexp(template,'(WAVEDESC: BLOCK)|(ENDBLOCK)','start'); %find the index where the actual description starts
 
@@ -129,7 +128,38 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%
 %%TEST DRIVER
-device = get(WVE, 'Parent');
+% initializes everything to empty/false/unknown
+scale = true;
+y = [];
+x = [];
+yunit = 'unknown';
+xunit = 'unknown';
+ygain = 'unknown';
+yintercept = 'unknown';
+length = 'unknown';
+xinterval = 'unknown';
+xintercept = 'unknown';
+Info = struct();
+ 
+%checks to see if the source input is a valid value
+validValues = {'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD', 'M1', 'M2', 'M3', 'M4'};
+scopeValues = {'C1', 'C2', 'C3', 'C4', 'TA', 'TB', 'TC', 'TD', 'M1', 'M2', 'M3', 'M4'};
+idx = strmatch(source,validValues, 'exact');
+
+%gives error if the channel is not a valid value
+if (isempty(idx))
+    error('Invalid SOURCE. CHANNEL must be one of: C1, C2, C3, C4, TA, TB, TC, TD, M1, M2, M3, M4');
+end
+
+%sets the source to its property value
+trueSource = scopeValues{idx};
+
+% checks to see if the scale entered is a valid value
+if exist('scaleWaveform', 'var')
+        scale = scaleWaveform;
+end
+
+device = get(obj, 'Parent');
 util = get(device, 'Util');
 
 % get the driverdata
@@ -137,11 +167,14 @@ driverData = get(device, 'DriverData');
 wd = driverData.wd;
 
 % stores the old user setings
-oldPrecision = get(WVE, 'Precision');
-oldByteOrder = get(WVE, 'ByteOrder');
+oldPrecision = get(obj, 'Precision');
+oldByteOrder = get(obj, 'ByteOrder');
 
-set(WVE, 'ByteOrder', 'littleEndian');
+% changes the precision and byteorder so that wave form can be read
+%set(obj, 'Precision', 'int8');
+set(obj, 'ByteOrder', 'littleEndian');
 
+% gets wave from the instrument
 if strcmp(oldPrecision,'int8')
     try 
         % Issue the curve transfer command.
@@ -167,8 +200,8 @@ if strcmp(oldPrecision,'int8')
     if (isempty(raw))
         % returns the settings back to what the user had them and displays
         % an error that the waveform did not get read in
-        %set(WVE, 'Precision', oldPrecision);
-        set(WVE, 'ByteOrder', oldByteOrder);
+        %set(obj, 'Precision', oldPrecision);
+        %set(obj, 'ByteOrder', oldByteOrder);
         error('An error occurred while reading the waveform.');
     end
   elseif strcmp(oldPrecision,'int16')
@@ -181,7 +214,7 @@ if strcmp(oldPrecision,'int8')
          raw = invoke(util, 'readbin', 'int8');
  
          % separates the data from the descriptor block 
-         header = raw(2:end)'; %deals with the fact that All is schorter than DESC, which is what the template parser expects, andwhich I don't want to rewrite.
+         header = raw(2:end)'; %deals with the fact that All is shorter than DESC, which is what the template parser expects, andwhich I don't want to rewrite.
          
          to_interface = sprintf('%s:WaveForm? DAT1',trueSource);
          invoke(util, 'sendcommand', to_interface);
@@ -205,7 +238,7 @@ if strcmp(oldPrecision,'int8')
          % return the settings back to what the user had them and display
          % an error that tells why the waveform was not read
          %set(obj, 'Precision', oldPrecision);
-         set(WVE, 'ByteOrder', oldByteOrder);
+         set(obj, 'ByteOrder', oldByteOrder);
          error(lasterr)  
      end
  
@@ -214,12 +247,13 @@ if strcmp(oldPrecision,'int8')
          % returns the settings back to what the user had them and displays
          % an error that the waveform did not get read in
          %set(obj, 'Precision', oldPrecision);
-         set(WVE, 'ByteOrder', oldByteOrder);
+         %set(obj, 'ByteOrder', oldByteOrder);
          error('An error occurred while reading the waveform.');
      end
 else
   error('Ascii precsision not allowed for WF transfer');
 end
+
 
 xunit = wd.getHORUNIT(header);
 yunit = wd.getVERTUNIT(header);
@@ -229,8 +263,13 @@ length = wd.getWAVE_ARRAY_COUNT(header);
 xinterval = wd.getHORIZ_INTERVAL(header);
 xintercept = wd.getHORIZ_OFFSET(header);
 Info = struct('xunit',xunit,'yunit',yunit,'ygain',ygain,'yintercept',yintercept,'length',length,'xinterval',xinterval,'xintercept',xintercept);
-y = y .* wd.getVERTICAL_GAIN(header) - wd.getVERTICAL_OFFSET(header);
+% Rescale the waveform is requested.
+if scale
+    % rescale the Y
+    y = y .* wd.getVERTICAL_GAIN(header) - wd.getVERTICAL_OFFSET(header);
+end
 
+% Calculate the horizontal points.
 x = ((0:double(wd.getWAVE_ARRAY_COUNT(header))).*wd.getHORIZ_INTERVAL(header)...
     + wd.getHORIZ_OFFSET(header))';
 
@@ -238,5 +277,5 @@ x = x';
 y = y';
 
 % Restore initial settings
-set(WVE, 'Precision', oldPrecision);
-set(WVE, 'ByteOrder', oldByteOrder);
+%set(obj, 'Precision', oldPrecision);
+%set(obj, 'ByteOrder', oldByteOrder);r);

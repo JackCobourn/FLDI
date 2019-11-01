@@ -7,9 +7,12 @@ x_loc= 14.6.*10;
 d=(3/16).*25.4;
 JetPos = x_loc./d;
 %% Connect scope
-[VisaInterface, Wavesurfer510] = OscopeVisaConnect_V2();
-ACQ = Wavesurfer510.Acquisition;
-TRG = Wavesurfer510.tRI;
+[VisaInterface, Wavesurfer510] = OscopeVisaConnect(); %get interface and device
+VSA = VisaInterface; %simplify code with shorthands
+SCP = Wavesurfer510;
+ACQ = Wavesurfer510.Acquisition; %simplify code with shorthands
+TRG = Wavesurfer510.Trigger;
+WVE = Wavesurfer510.Waveform;
 %% Connect and home motor
 a=motor.listdevices; %find all attached motors. '27252541' is the y axis
 MotorY=motor();        % create a motor object
@@ -28,30 +31,30 @@ waves2take = 20;
 
 FLDI_Data = struct('Jetposition',JetPos,'X_loc',x_loc,'d',d);
 %take max data
-    set(Wavesurfer510.Acquisition(1), 'Control', 'single'); %set to single with matlab driver
+    set(ACQ, 'Control', 'single'); %set to single with matlab driver
     %set(Waveform,'Precision','int16'); %set prcision with matalab driver
     %Already set in new drier
-    invoke(fprintf(VisaInterface, "FRTR"); %instead write a low level force trig directly to machine
-    [Y,X,YUNIT,XUNIT,HEADER] = invoke(WVE,'readwaveform','channel3');
-    FLDI_Data.Max16 = struct('Y',Y,'X',X,'YUNIT',YUNIT,'XUNIT',XUNIT,'Header',HEADER);
+    invoke(TRG, 'trigger'); 
+    [Y,~, info] = invoke(WVE,'readwaveform','C3',false);
+    FLDI_Data.Max = struct('Y',Y,'INFO',info);
     
-    set(WVE,'Precision','int8');
-    [Y,X,YUNIT,XUNIT,HEADER] = invoke(WVE,'readwaveform','channel3');
-    FLDI_Data.Max8 = struct('Y',Y,'X',X,'YUNIT',YUNIT,'XUNIT',XUNIT,'Header',HEADER);
-
-
 %take min data
-    set(Wavesurfer510.Acquisition(1), 'Control', 'single'); %set to single with matlab driver
-    set(WVE,'Precision','int16'); %set prcision with matalab driver
-    fprintf(VisaInterface, "FRTR"); %instead write a low level force trig directly to machine
-    [Y,X,YUNIT,XUNIT,HEADER] = invoke(WVE,'readwaveform','channel3');
-    FLDI_Data.Min16 = struct('Y',Y,'X',X,'YUNIT',YUNIT,'XUNIT',XUNIT,'Header',HEADER);
+    set(ACQ, 'Control', 'single'); %set to single with matlab driver
+    %set(Waveform,'Precision','int16'); %set prcision with matalab driver
+    %Already set in new drier
+    invoke(TRG, 'trigger'); 
+    [Y,~, info] = invoke(WVE,'readwaveform','C3',false);
+    FLDI_Data.Min = struct('Y',Y,'INFO',info);
+
+%take Zero Data
+    set(ACQ, 'Control', 'single'); %set to single with matlab driver
+    %set(Waveform,'Precision','int16'); %set prcision with matalab driver
+    %Already set in new drier
+    invoke(TRG, 'trigger'); 
+    [Y,~, info] = invoke(WVE,'readwaveform','C3',false);
+    FLDI_Data.Zero = struct('Y',Y,'INFO',info);
+
     
-    set(WVE,'Precision','int8');
-    [Y,X,YUNIT,XUNIT,HEADER] = invoke(WVE,'readwaveform','channel3');
-    FLDI_Data.Min8 = struct('Y',Y,'X',X,'YUNIT',YUNIT,'XUNIT',XUNIT,'Header',HEADER);
-
-
 %set up sweep
 FLDI_Data.YSweep = struct();
 
@@ -62,25 +65,25 @@ while CurrentPosition>=HomePos
     FLDI_Data.YSweep(CurrentStep).YPosition = CurrentPosition;
     FLDI_Data.YSweep(CurrentStep).TrueYPosition = MotorY.position;
     FLDI_Data.YSweep(CurrentStep).Data = struct();
-    
+    fprintf('Current Position is %0.3f',MotorY.position)
     %DataLoop
     for i = 1:1:waves2take
-        set(Wavesurfer510.Acquisition(1), 'Control', 'single'); %set to single with matlab driver
-        %invoke(Wavesurfer510.Trigger,'trigger'); still does not work.
-        %Double arm command does not trigger as manual says
-        fprintf(VisaInterface, "FRTR"); %instead write a low level force trig directly to machine
+        try
+        set(ACQ, 'Control', 'single'); %set to single with matlab driver
+        invoke(TRG, 'trigger'); 
+        [Y,~, info] = invoke(WVE,'readwaveform','C3');
+        FLDI_Data.YSweep(CurrentStep).Data(waves2take) = struct('Y',Y,'INFO',info);
         
-        set(WVE,'Precision','int16'); %set prcision with matalab driver
-        [Y,X,YUNIT,XUNIT,HEADER] = invoke(WVE,'readwaveform','channel3');
-        FLDI_Data.YSweep(CurrentStep).Data(i).Wave16 = struct('Y',Y,'X',X,'YUNIT',YUNIT,'XUNIT',XUNIT,'Header',HEADER);
-        
-        
-        set(WVE,'Precision','int8'); %set to int8 to do back up data aqq
-        [Y,X,YUNIT,XUNIT,HEADER] = invoke(WVE,'readwaveform','channel3');
-        FLDI_Data.YSweep(CurrentStep).Data(i).Wave8 = struct('Y',Y,'X',X,'YUNIT',YUNIT,'XUNIT',XUNIT,'Header',HEADER);
-
+        catch %if it doesnt work try again
+        set(ACQ, 'Control', 'single'); %set to single with matlab driver
+        pause(1)
+        invoke(TRG, 'trigger');
+        pause(1)
+        [Y,~, info] = invoke(WVE,'readwaveform','C3');
+        pause(1)
+        FLDI_Data.YSweep(CurrentStep).Data(waves2take) = struct('Y',Y,'INFO',info);
+        end
     end
-    
     %Calculate move
     NextPos = CurrentPosition-PosStep;
     %motor Move

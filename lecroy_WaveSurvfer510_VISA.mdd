@@ -5680,12 +5680,12 @@ driverData = get(device, 'DriverData');
 wd = driverData.wd;
 
 % stores the old user setings
-oldPrecision = get(obj, 'Precision');
-oldByteOrder = get(obj, 'ByteOrder');
+oldPrecision = 'int16';%get(obj, 'Precision');
+%oldByteOrder = get(obj, 'ByteOrder');
 
 % changes the precision and byteorder so that wave form can be read
 %set(obj, 'Precision', 'int8');
-set(obj, 'ByteOrder', 'littleEndian');
+%set(obj, 'ByteOrder', 'littleEndian');
 
 % gets wave from the instrument
 if strcmp(oldPrecision,'int8')
@@ -5705,7 +5705,7 @@ if strcmp(oldPrecision,'int8')
         % return the settings back to what the user had them and display
         % an error that tells why the waveform was not read
         %set(obj, 'Precision', oldPrecision);
-        set(obj, 'ByteOrder', oldByteOrder);
+        %set(obj, 'ByteOrder', oldByteOrder);
         error(lasterr)  
     end
 
@@ -5751,7 +5751,7 @@ if strcmp(oldPrecision,'int8')
          % return the settings back to what the user had them and display
          % an error that tells why the waveform was not read
          %set(obj, 'Precision', oldPrecision);
-         set(obj, 'ByteOrder', oldByteOrder);
+         %set(obj, 'ByteOrder', oldByteOrder);
          error(lasterr)  
      end
  
@@ -5787,7 +5787,7 @@ x = ((0:double(wd.getWAVE_ARRAY_COUNT(header))).*wd.getHORIZ_INTERVAL(header)...
     + wd.getHORIZ_OFFSET(header))';
 
 x = x';
-y = y';
+y = int16(y');
 
 % Restore initial settings
 %set(obj, 'Precision', oldPrecision);
