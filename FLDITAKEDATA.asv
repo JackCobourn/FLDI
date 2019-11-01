@@ -21,7 +21,7 @@ MotorY.home(); %home is at top
 MotorY.moveto(50);
 
 %% Position loop
-
+Y = int8(1);
 PosStep=0.5; %set step size
 HomePos = 0; %function of motor home and cordinate system
 EndPos = 50;
@@ -57,11 +57,23 @@ FLDI_Data = struct('Jetposition',JetPos,'X_loc',x_loc,'d',d);
     
 %set up sweep
 FLDI_Data.YSweep = struct();
+%%%
+%initialize waitbar
+f = uifigure;
+d = uiprogressdlg(f,'Title','Please Wait',...
+    'Message','Begining Data ACQ');
+
+pause(1)
+% Close dialog box
+close(d)
 
 tic
+d.Title = 'Running data ACQ';
+
 while CurrentPosition>=HomePos
     %known at start
     CurrentStep = 1+(EndPos-CurrentPosition)./PosStep;
+    d.Message=sprintf('moving to position %0.3f of 100',CurrentStep);
     FLDI_Data.YSweep(CurrentStep).YPosition = CurrentPosition;
     FLDI_Data.YSweep(CurrentStep).TrueYPosition = MotorY.position;
     FLDI_Data.YSweep(CurrentStep).Data = struct();
@@ -69,6 +81,8 @@ while CurrentPosition>=HomePos
     %DataLoop
     for i = 1:1:waves2take
         try
+            d.Message=sprintf('Running loop %u at position %0.3f of 100',i,CurrentStep);
+            d.Value = (20*(CurrentStep-1)+i)./20000;
         set(ACQ, 'Control', 'single'); %set to single with matlab driver
         invoke(TRG, 'trigger'); 
         [Y,~, info] = invoke(WVE,'readwaveform','C3');
