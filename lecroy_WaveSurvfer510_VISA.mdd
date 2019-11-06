@@ -27,6 +27,7 @@ driverData.fc = 'C1';
 driverData.source = 'C1';
 driverData.header = [];
 
+
 % Extract the interface object and configure it. 
 % This driver will work with either TCPIP or GPIB.
 interface = get(obj, 'Interface');
