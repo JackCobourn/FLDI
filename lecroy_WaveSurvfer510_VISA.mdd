@@ -7,10 +7,10 @@
    <InstrumentManufacturer>LeCroy</InstrumentManufacturer>
    <InstrumentModel>WaveSurfer510</InstrumentModel>
    <InstrumentVersion>1.0</InstrumentVersion>
-   <Identify/>
-   <Reset/>
-   <Selftest/>
-   <Error/>
+   <Identify>*IDN?</Identify>
+   <Reset>*RST</Reset>
+   <Selftest>*TST?</Selftest>
+   <Error>ALST?</Error>
    <CreateInitCode>
       <Code>function init(obj)
 % This method is called after the object is created.
@@ -4838,8 +4838,8 @@ util = get(device, 'Util');
         error('LOCATION must be numeric');
     elseif location ~= floor(location)
         error('LOCATION must be a scalar');
-    elseif  location &gt;5 || location &lt;1
-            error('LOCATION must be between 1 and 5 inclusive');
+    elseif  location &gt;6 || location &lt;1
+            error('LOCATION must be between 1 and 6 inclusive');
     end
     
 % Send memory name query command
