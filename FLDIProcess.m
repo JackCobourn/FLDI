@@ -2,6 +2,7 @@
 load('20191110_FLDI_Data_XD30.mat');
 
 d = FLDI_Data.d;
+jet = FLDI_Data.Jetposition;
 scopey = []; %introduce variables
 info = struct();
 RMS = [];
@@ -42,11 +43,23 @@ for i2=1:1:length(FLDI_Data.YSweep)
     err_plot(i2) = FLDI_Results.YSweep(i2).STDofRMS;
 end
 
-save('20191110_FLDI_Results_XD30.mat','FLDI_Results','-v7.13','-nocompression');
+save('20191111_FLDI_Results_XD10_vertical.mat','FLDI_Results','-v7.3','-nocompression');
 
 f1 = figure(1);
-EB1 = errorbar(x_plot,y_plot,err_plot);
+P1 = errorbar(x_plot/d-25/d,y_plot,err_plot);
+%P1 = plot(x_plot/d-25/d,y_plot);
 
+P1.Color = 'black';
+P1.LineWidth=1.5;
+
+axObj=P1.Parent;
+axObj.YGrid='on';
+axObj.XGrid='on';
+xlabel('Jet Location y/d in jet coordinates');
+ylabel('Average RMS, (V), N = 20, vertical focii');
+axObj.FontSize=26;
+
+legend(sprintf('x/d=%3.3f',jet));
 %% XD 40
 load('20191110_FLDI_Data_XD40.mat');
 
