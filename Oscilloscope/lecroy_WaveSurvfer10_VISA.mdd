@@ -110,8 +110,8 @@ for i=1:length(templateStruct)
         str2num(templateStruct(i).idxStart) + headerOffset;
     
     % convert template type names to MATLAB types
-    templateValues = {'string', 'byte', 'word',  'long',  'float',  'double', 'text', 'unit_definition'};
-    matlabValues = {  'char',   'int8', 'int16', 'int32', 'single', 'double', 'uint8', 'uint8'};
+    templateValues = {'string', 'byte', 'word',  'long',  'float',  'double', 'text', 'unit_definition','enum'};
+    matlabValues = {  'char',   'int8', 'int16', 'int32', 'single', 'double', 'uint8', 'uint8', 'int16'};
     idx = strmatch(templateStruct(i).type, templateValues);
     if ~isempty(idx)
         templateStruct(i).type = matlabValues{idx};
@@ -158,6 +158,7 @@ driverData.wd.getVERTUNIT         = makeTextParser(makeTemplateParser(wd.VERTUNI
 
 %added functions to increase wf? options
 driverData.wd.getCOMM_TYPE  = makeTemplateParser(wd.COMM_TYPE);
+driverData.wd.getCOMM_ORDER  = makeTemplateParser(wd.COMM_ORDER);
 driverData.wd.getWAVE_ARRAY_1  = makeTemplateParser(wd.WAVE_ARRAY_1);
 %driverData.wd.getWAVE_DESCRIPTOR  = makeTemplateParser(wd.WAVE_DESCRIPTOR);
 driverData.wd.getWAVE_ARRAY_COUNT  = makeTemplateParser(wd.WAVE_ARRAY_COUNT);
@@ -4499,6 +4500,7 @@ set(get(obj, 'Parent'), 'DriverData', driverData)
                      <Enum Name="amplitude" Value="AMPL"/>
                      <Enum Name="area" Value="AREA"/>
                      <Enum Name="base" Value="BASE"/>
+                     <Enum Name="StandardDeviation" Value="SDEV"/>
                   </ConstraintValue>
                </PermissibleType>
                <DefaultValue>frequency</DefaultValue>
@@ -5666,6 +5668,8 @@ yintercept = 'unknown';
 length = 'unknown';
 xinterval = 'unknown';
 xintercept = 'unknown';
+cts = 'unknown';
+cts = 'unknown';
 header = [];
 Info = struct();
  
@@ -5705,7 +5709,7 @@ end
 % changes the precision and byteorder so that wave form can be read
 try
     set(obj, 'ByteOrder', 'littleEndian');
-    set(obj, 'Precision', 'int16'); %set to 16 to get most precision from scope
+    %set(obj, 'Precision', 'int16'); %set to 16 to get most precision from scope
 
 catch
     warning('could not set precision or ByteOrder before transfer')
@@ -5772,7 +5776,9 @@ if (isempty(raw))
     end
 end
 
-y = typecast(cast(y,'int8'),'int16'); %this works, as both win64 and currently oscope are in little endian
+%typecast y
+
+%y = typecast(cast(y,'int8'),'int16'); %this works, as both win64 and currently oscope are in little endian
 % We care casting the double returned from readbin into a 8 bit with
 % cast(), so that we don't need to save huge 64 bit doubles. if you wanted
 % bigendian to work you could add a swapbytes() to the front of this, but
@@ -5791,7 +5797,24 @@ yintercept = wd.getVERTICAL_OFFSET(header);
 length = wd.getWAVE_ARRAY_COUNT(header);
 xinterval = wd.getHORIZ_INTERVAL(header);
 xintercept = wd.getHORIZ_OFFSET(header);
-Info = struct('xunit',xunit,'yunit',yunit,'ygain',ygain,'yintercept',yintercept,'length',length,'xinterval',xinterval,'xintercept',xintercept);
+comm_type = wd.getCOMM_TYPE(header);
+endian = wd.getCOMM_ORDER(header);
+
+%convert comm type and endian
+if comm_type == 0
+    cts = 'int8';
+elseif comm_type == 1
+    cts = 'int16';
+end
+
+if endian == 0
+    eds = 'bigEndian';
+elseif endian == 1
+    eds = 'littleEndian';
+end
+
+
+Info = struct('xunit',xunit,'yunit',yunit,'ygain',ygain,'yintercept',yintercept,'length',length,'xinterval',xinterval,'xintercept',xintercept,'bitdepth',cts,'endian',eds,'fullheader',header);
 
 % Rescale the waveform if requested.
 if scale
