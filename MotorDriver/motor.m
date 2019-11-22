@@ -52,7 +52,7 @@ classdef motor < handle
        DEFAULTACC=10;           % Default acceleration
        TPOLLING=250;            % Default polling time
        TIMEOUTSETTINGS=7000;    % Default timeout time for settings change
-       TIMEOUTMOVE=100000;      % Default time out time for motor move
+       TIMEOUTMOVE=300000;      % Default time out time for motor move
     end
     properties 
        % These properties are within Matlab wrapper 
