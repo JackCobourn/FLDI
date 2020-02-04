@@ -78,7 +78,7 @@ invoke(util, 'sendcommand', 'COMM_HEADER OFF'); %ResponseHeaderState is readonly
 invoke(util, 'getproperty', 'CMR?', '%d');
 
 %Set the scope to 16bit word in order to increase precision for waveform
-%transfer
+%transfer %note scope does not acutally have 16 bit
 set(obj.Waveform, 'Precision', 'int8');
 
 
@@ -5831,7 +5831,7 @@ x = x';
 y = y';
 
 %flush buffers after transfer
-flushinput(interface); % I beleive full buffers were causing weird errors where the scope refuesd to read or write anything, but only sometimes. this seems to work.
+flushinput(interface); % I beleive full buffers were causing wierd errors where the scope refuesd to read or write anything, but only sometimes. this seems to work.
 flushoutput(interface);
 
 % Restore 8bit and endian initial settings

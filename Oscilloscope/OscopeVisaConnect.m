@@ -13,7 +13,7 @@ connect(Wavesurfer10)
 %Waveform
 
 %beep that it worked
-%invoke(Wavesurfer10,'beep');
+invoke(Wavesurfer10,'beep');
 %go to defult setup
 %invoke(Wavesurfer10,'reset')
 %go to saved setting #6
