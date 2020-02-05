@@ -5824,7 +5824,7 @@ end
 
 % Calculate the horizontal points. I doubt you want this if you are trying
 % to get raw data with invoke(obj,'readwaveform','channel',false), so call [y,~,info] = invoke...()
-x = (0:length-1).*xintercept + xintercept;
+x = (0:length-1).*xinterval + xintercept;
 
 %return as columns
 x = x';

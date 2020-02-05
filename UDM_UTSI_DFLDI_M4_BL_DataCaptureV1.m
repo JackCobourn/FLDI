@@ -4,11 +4,11 @@
 %% RUN CONDITIONS
 
 tunnel_section = 1; %section of tunnel FLDI is probing
-DailyRunNum = 1;
-CampainRunNum = 9;
-PositionRunNumber = 2;
+DailyRunNum = 4;
+CampainRunNum = 12;
+PositionRunNumber = 1;
 x_dist = 16.6;  % streamwise distance from nozzle/test section junction to first beam focus in inches (+-2mm)
-y_dist = 2.25;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
+y_dist = 2.00;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
 z_dist = 0;  % position of tunnel test section centerline relative to FLDI focus (cm)
 obj_lens = 'f=-9mm';
 Gain = 10;  %gain from amplification (if used)
@@ -22,7 +22,7 @@ expected_burst_pressure = '~60Psia'; % tunnel high pressure in Psia
 dx1 = '300micron streamwise'; %FLDI beam separation
 dx2 = 2.6e-3; %[m] 
 model = 'empty tunnel'; %The model inserted in the tunnel during the run
-notes = '3nd test running the tunnel';
+notes = 'chA is ch2';
 date = date(); %Comment out for testing on a different day
 
 
@@ -43,16 +43,16 @@ vmax(2) = input('Enter the ch B maximum voltage:');
 vmin(2) = input('Enter the ch B minimum voltage:');
 filtenab = 0; %input('High-Pass filter enabled? (Y/N): ');
 vavg = (vmax+vmin)./2.0;
-vopts = [10 20 50 100 200 500 1000 2000 5000 10000 20000]; % voltage range options in millivolts
+%vopts = [10 20 50 100 200 500 1000 2000 5000 10000 20000]; % voltage range options in millivolts
 vsep = vmax - vavg; % range of instrument for both channels
 
 
 ACoupling = query(VisaInterface,'C3:COUPLING?');
 BCoupling = query(VisaInterface,'C2:COUPLING?');
-AOffset = query(VisaInterface,'C3:OFFSET?');
-BOffset = query(VisaInterface,'C2:OFFSET?');
-AScale = query(VisaInterface,'C3:VOLT_DIV?')*10;
-BScale = query(VisaInterface,'C2:VOLT_DIV?')*10;
+AOffset = eval(query(VisaInterface,'C3:OFFSET?'));
+BOffset = eval(query(VisaInterface,'C2:OFFSET?'));
+AScale = eval(query(VisaInterface,'C3:VOLT_DIV?'))*10;
+BScale = eval(query(VisaInterface,'C2:VOLT_DIV?'))*10;
 
 %% GET TIMEBASE
 recordtime = get(ACQ,'TimeBase')*10; %seconds
@@ -68,8 +68,8 @@ pause;
  set(ACQ, 'Control', 'single'); %set to single with matlab driver
     invoke(TRG, 'trigger');
     %Note channel A is bigger range.
-    [chA_noise, timeMs, chA_noise_info] = invoke(WVE,'readwaveform','C3',true); %grab cha, with the time, and scled to doubles
-    [chB_noise, ~, chB_noise_info] = invoke(WVE,'readwaveform','C2',true); %no need to grab time again
+    [chA_noise, timeMs, chA_noise_info] = invoke(WVE,'readwaveform','C2',true); %grab cha, with the time, and scled to doubles
+    [chB_noise, ~, chB_noise_info] = invoke(WVE,'readwaveform','C3',true); %no need to grab time again
     
     
 %% PAUSE FOR USER INPUT
@@ -81,23 +81,15 @@ pause;
     
  
  %% PAUSE FOR USER INPUT
-disp('Paused: Please press any key to Collect data after run.');
+disp('Paused: Please press any key to collect data after run.');
 pause;
 %maybe should poll scope for trigger but easier to just click at end of run
 
 %% Collect RUN DATA
-    [chA_run, ~, chA_run_info] = invoke(WVE,'readwaveform','C3',true);
-    [chB_run, ~, chB_run_info] = invoke(WVE,'readwaveform','C2',true);
+    [chA_run, ~, chA_run_info] = invoke(WVE,'readwaveform','C2',true);
+    [chB_run, ~, chB_run_info] = invoke(WVE,'readwaveform','C3',true);
     
-    %% PAUSE FOR USER INPUT
-disp('Paused: Please press any key to Collect Second Noise Data at high P.');
-pause;
-%maybe should poll scope for trigger but easier to just click at end of run
 
-%% Collect Noise Data2
-    [chA_noise2, ~, chA_noise_info2] = invoke(WVE,'readwaveform','C3',true);
-    [chB_noise2, ~, chB_noise_info2] = invoke(WVE,'readwaveform','C2',true);
-    
 %% Plot Signal and Noise and Histogram
 disp('Plotting Signal')
 
@@ -189,6 +181,17 @@ figure(4)
 clf
 plot(lag,cross_cor)
 
+ %% PAUSE FOR USER INPUT
+disp('Paused: Please press any key to collect 2nd noise data at high P.');
+disp('Will overwrite run data on scope, make sure its done collecting');
+pause;
+
+%% Collect Noise Data2
+set(ACQ, 'Control', 'single'); %set to single with matlab driver
+    invoke(TRG, 'trigger');
+    [chA_noise2, ~, chA_noise_info2] = invoke(WVE,'readwaveform','C2',true);
+    [chB_noise2, ~, chB_noise_info2] = invoke(WVE,'readwaveform','C3',true);
+    
 %% DEVICE DISCONNECTION
 disp('Disconnecting')
 % Disconnect device object from hardware.
@@ -200,11 +203,11 @@ disp('Saving data...')
 % save F:\FLDI_UMD\200204\UTSI_M4_2ptFLDI_y_2_25_inch_02.mat timeMs
 % recordtime chA_run chA_noise chB_run chB_noise chA_run_info chA_noise_info chB_run_info chB_noise_info Fs numSamples bitRes vmax vmin vavg dx1 dx2 tunnel_section x_dist y_dist z_dist Gain HLfilter RL num_diaphrams expected_burst_pressure model NDfilter BPfilter obj_lens notes date DailyRunNum CampainRunNum PositionRunNumber
 
-save('F:\FLDI_UMD\200204\UTSI_M4_2ptFLDI_y_2_25_inch_02.mat',...
+save('F:\FLDI_UMD\20200205\UTSI_M4_2ptFLDI_y_2_00_inch_01.mat',...
     'chA_run', 'chA_noise','chA_noise2', 'chB_run', 'chB_noise','chB_noise2',...
     'chA_run_info', 'chA_noise_info','chA_noise_info2', 'chB_run_info', 'chB_noise_info','chB_noise_info2',...
-    'Fs', 'numSamples', 'bitRes', 'vmax', 'vmin', 'vavg', 'dx1', 'dx2', 'tunnel_section', 'x_dist', 'y_dist', 'z_dist',...
+    'timeMs','Fs', 'numSamples', 'bitRes', 'vmax', 'vmin', 'vavg', 'dx1', 'dx2', 'tunnel_section', 'x_dist', 'y_dist', 'z_dist',...
     'Gain', 'HLfilter', 'RL', 'num_diaphrams', 'expected_burst_pressure','model', 'NDfilter', 'BPfilter', 'obj_lens',...
     'notes', 'date', 'DailyRunNum', 'CampainRunNum', 'PositionRunNumber','-v7.3','-nocompression');
-
+cd('F:\FLDI_UMD\20200205')
 disp('DONE!')
