@@ -4,8 +4,11 @@
 %% RUN CONDITIONS
 
 tunnel_section = 1; %section of tunnel FLDI is probing
-x_dist = 16.6;  % streamwise distance from nozzle/rest section junction to first beam focus in inches (+-2mm)
-y_dist = 3.24;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
+DailyRunNum = 1;
+CampainRunNum = 9;
+PositionRunNumber = 2;
+x_dist = 16.6;  % streamwise distance from nozzle/test section junction to first beam focus in inches (+-2mm)
+y_dist = 2.25;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
 z_dist = 0;  % position of tunnel test section centerline relative to FLDI focus (cm)
 obj_lens = 'f=-9mm';
 Gain = 10;  %gain from amplification (if used)
@@ -13,23 +16,26 @@ NDfilter = 'no';
 HLfilter = 'none';  %high or low pass Filter type
 BPfilter = 'no';  % Bandpass filter
 RL = 'none, using photodiodes with built in amplifier'; %[Ohms] terminating resistor
+bitRes = 8;
 num_diaphrams = 3;  % number of diaphrams in ludweig tube
 expected_burst_pressure = '~60Psia'; % tunnel high pressure in Psia
 dx1 = '300micron streamwise'; %FLDI beam separation
 dx2 = 2.6e-3; %[m] 
 model = 'empty tunnel'; %The model inserted in the tunnel during the run
 notes = '3nd test running the tunnel';
-date ='1/30/2020';
+date = date(); %Comment out for testing on a different day
 
 
 %% Connect Teledyne Ocilloscope
+cd('D:\Jack\Documents\GitHub\Focused_Laser_Dif_interf')
+cd('.\oscilloscope')
 [VisaInterface, Wavesurfer10] = OscopeVisaConnect(); %get interface and device
 VSA = VisaInterface; %simplify code with shorthands
 SCP = Wavesurfer10;
 ACQ = Wavesurfer10.Acquisition; %simplify code with shorthands
 TRG = Wavesurfer10.Trigger;
 WVE = Wavesurfer10.Waveform;
-
+cd('..\')
 %% Record CHANNELS
 vmax(1) = input('Enter the ch A maximum voltage:');
 vmin(1) = input('Enter the ch A minimum voltage:');
@@ -43,13 +49,10 @@ vsep = vmax - vavg; % range of instrument for both channels
 %%%%%%%%%get channel settings or set
 
 %% GET TIMEBASE
-
-%%%%%%%%%%%get timebase
-
-
-
-%% Get Number Of Samples
-%as a function of timebase
+recordtime = get(ACQ,'TimeBase')*10; %seconds
+set(ACQ,'Delay',-get(ACQ,'TimeBase').*10./2) %set delay so that nothing from before trigger is saved
+numSamples = eval(query(VisaInterface,'MEMORY_SIZE?')); %%% Add to driver properly. also you always get 2 extra points
+Fs = numSamples./recordtime; %Hz
 
 %% PAUSE FOR USER INPUT
 disp('Paused: Please press any key to collect noise data');
@@ -58,8 +61,9 @@ pause;
 %% CAPTURE NOISE DATA
  set(ACQ, 'Control', 'single'); %set to single with matlab driver
     invoke(TRG, 'trigger');
-    [Y,X, info] = invoke(WVE,'readwaveform','C3',false);
-    [Y,X, info] = invoke(WVE,'readwaveform','C3',false);
+    %Note channel A is bigger range.
+    [chA_noise, timeMs, chA_noise_info] = invoke(WVE,'readwaveform','C3',true); %grab cha, with the time, and scled to doubles
+    [chB_noise, ~, chB_noise_info] = invoke(WVE,'readwaveform','C2',true); %no need to grab time again
     
     
 %% PAUSE FOR USER INPUT
@@ -76,8 +80,8 @@ pause;
 %maybe should poll scope for trigger but easier to just click at end of run
 
 %% Collect RUN DATA
-    [Y,X, info] = invoke(WVE,'readwaveform','C3',false);
-    [Y,X, info] = invoke(WVE,'readwaveform','C3',false);
+    [chA_run, ~, chA_run_info] = invoke(WVE,'readwaveform','C3',false);
+    [chB_run, ~, chB_run_info] = invoke(WVE,'readwaveform','C3',false);
 
 %% Plot Signal and Noise and Histogram
 disp('Plotting Signal')
@@ -121,14 +125,13 @@ hold off
 ham=100; %number of divisions for hamming windows
 start = 0.1; %[s] trim window start
 stop=0.2; %[s] trim window stop
-sps = numSamples/blockTime;
 %compute spectra for channel A
-chA_run_trim = (chA_run((sps*start)+1:(sps*stop)-1));
+chA_run_trim = (chA_run(fix((Fs*start)):fix((Fs*stop)-1)));
 % chA_noise_trim = (chA_noise((sps*start)+1:(sps*stop)-1));
 [PSDa, f] = pwelch(chA_run_trim-mean(chA_run_trim),ceil(length(chA_run_trim)/ham),[],[],ceil(Fs));
 [PSDna, fn] = pwelch((chA_noise-mean(chA_noise)),numSamples/ham,[],[],Fs);
 %compute spectra for channel B
-chB_run_trim = (chB_run((sps*start)+1:(sps*stop)-1));
+chB_run_trim = (chB_run(fix((Fs*start)):fix((Fs*stop))-1));
 % chB_noise_trim = (chB_noise((sps*start)+1:(sps*stop)-1));
 [PSDb, f] = pwelch(chB_run_trim-mean(chB_run_trim),ceil(length(chB_run_trim)/ham),[],[],ceil(Fs));
 [PSDnb, fn] = pwelch((chB_noise-mean(chB_noise)),numSamples/ham,[],[],Fs);
@@ -179,5 +182,6 @@ disconnect(Wavesurfer10)
 %% SAVE
 disp('Saving data...')
 % %save the variables
-% save D:\UTSI_FLDI_2020\MATLAB\data_files\UTSI_M4_2ptFLDI_y_3_24_inch_02.mat timeMs blockTime chA_run chA_noise chB_run chB_noise Fs numSamples bitRes vmax vmin vavg dx1 dx2 tunnel_section x_dist y_dist z_dist Gain HLfilter RL num_diaphrams expected_burst_pressure model NDfilter BPfilter obj_lens notes date
+% save F:\FLDI_UMD\200204\UTSI_M4_2ptFLDI_y_2_25_inch_02.mat timeMs
+% recordtime chA_run chA_noise chB_run chB_noise chA_run_info chA_noise_info chB_run_info chB_noise_info Fs numSamples bitRes vmax vmin vavg dx1 dx2 tunnel_section x_dist y_dist z_dist Gain HLfilter RL num_diaphrams expected_burst_pressure model NDfilter BPfilter obj_lens notes date DailyRunNum CampainRunNum PositionRunNumber
 disp('DONE!')
