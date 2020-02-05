@@ -46,7 +46,13 @@ vavg = (vmax+vmin)./2.0;
 vopts = [10 20 50 100 200 500 1000 2000 5000 10000 20000]; % voltage range options in millivolts
 vsep = vmax - vavg; % range of instrument for both channels
 
-%%%%%%%%%get channel settings or set
+
+ACoupling = query(VisaInterface,'C3:COUPLING?');
+BCoupling = query(VisaInterface,'C2:COUPLING?');
+AOffset = query(VisaInterface,'C3:OFFSET?');
+BOffset = query(VisaInterface,'C2:OFFSET?');
+AScale = query(VisaInterface,'C3:VOLT_DIV?')*10;
+BScale = query(VisaInterface,'C2:VOLT_DIV?')*10;
 
 %% GET TIMEBASE
 recordtime = get(ACQ,'TimeBase')*10; %seconds
@@ -80,9 +86,18 @@ pause;
 %maybe should poll scope for trigger but easier to just click at end of run
 
 %% Collect RUN DATA
-    [chA_run, ~, chA_run_info] = invoke(WVE,'readwaveform','C3',false);
-    [chB_run, ~, chB_run_info] = invoke(WVE,'readwaveform','C3',false);
+    [chA_run, ~, chA_run_info] = invoke(WVE,'readwaveform','C3',true);
+    [chB_run, ~, chB_run_info] = invoke(WVE,'readwaveform','C2',true);
+    
+    %% PAUSE FOR USER INPUT
+disp('Paused: Please press any key to Collect Second Noise Data at high P.');
+pause;
+%maybe should poll scope for trigger but easier to just click at end of run
 
+%% Collect Noise Data2
+    [chA_noise2, ~, chA_noise_info2] = invoke(WVE,'readwaveform','C3',true);
+    [chB_noise2, ~, chB_noise_info2] = invoke(WVE,'readwaveform','C2',true);
+    
 %% Plot Signal and Noise and Histogram
 disp('Plotting Signal')
 
@@ -184,4 +199,12 @@ disp('Saving data...')
 % %save the variables
 % save F:\FLDI_UMD\200204\UTSI_M4_2ptFLDI_y_2_25_inch_02.mat timeMs
 % recordtime chA_run chA_noise chB_run chB_noise chA_run_info chA_noise_info chB_run_info chB_noise_info Fs numSamples bitRes vmax vmin vavg dx1 dx2 tunnel_section x_dist y_dist z_dist Gain HLfilter RL num_diaphrams expected_burst_pressure model NDfilter BPfilter obj_lens notes date DailyRunNum CampainRunNum PositionRunNumber
+
+save('F:\FLDI_UMD\200204\UTSI_M4_2ptFLDI_y_2_25_inch_02.mat',...
+    'chA_run', 'chA_noise','chA_noise2', 'chB_run', 'chB_noise','chB_noise2',...
+    'chA_run_info', 'chA_noise_info','chA_noise_info2', 'chB_run_info', 'chB_noise_info','chB_noise_info2',...
+    'Fs', 'numSamples', 'bitRes', 'vmax', 'vmin', 'vavg', 'dx1', 'dx2', 'tunnel_section', 'x_dist', 'y_dist', 'z_dist',...
+    'Gain', 'HLfilter', 'RL', 'num_diaphrams', 'expected_burst_pressure','model', 'NDfilter', 'BPfilter', 'obj_lens',...
+    'notes', 'date', 'DailyRunNum', 'CampainRunNum', 'PositionRunNumber','-v7.3','-nocompression');
+
 disp('DONE!')
