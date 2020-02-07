@@ -1,14 +1,14 @@
 %Teledyne Wavesurfer 510 UTSI/UMD M4 2pFLDI V1
-%created by Jack Cobourn 20200204 using work from Andrew Ceruzi
+%edited to work with Wavesurfer by Jack Cobourn 20200204 using Code from Andrew Ceruzi
 
 %% RUN CONDITIONS
 
 tunnel_section = 1; %section of tunnel FLDI is probing
 DailyRunNum = 2;
-CampainRunNum = 14;
+CampainRunNum = 16;
 PositionRunNumber = 2;
 x_dist = 16.6;  % streamwise distance from nozzle/test section junction to first beam focus in inches (+-2mm)
-y_dist = 2.00;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
+y_dist = 0.99;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
 z_dist = 0;  % position of tunnel test section centerline relative to FLDI focus (cm)
 obj_lens = 'f=-9mm';
 Gain = 10;  %gain from amplification (if used)
@@ -202,8 +202,8 @@ disp('Saving data...')
 % %save the variables
 % save F:\FLDI_UMD\200204\UTSI_M4_2ptFLDI_y_2_25_inch_02.mat timeMs
 % recordtime chA_run chA_noise chB_run chB_noise chA_run_info chA_noise_info chB_run_info chB_noise_info Fs numSamples bitRes vmax vmin vavg dx1 dx2 tunnel_section x_dist y_dist z_dist Gain HLfilter RL num_diaphrams expected_burst_pressure model NDfilter BPfilter obj_lens notes date DailyRunNum CampainRunNum PositionRunNumber
-folderstring='F:\FLDI_UMD\20200206';
-savestring='UTSI_M4_2ptFLDI_y_2_00_inch_02';
+folderstring='F:\FLDI_UMD\20200207';
+savestring='UTSI_M4_2ptFLDI_y_0_99_inch_02';
 %mkdir(folderstring);
 cd(folderstring)
 save([folderstring '\' savestring '.mat'],...
