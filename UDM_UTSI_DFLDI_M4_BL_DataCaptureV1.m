@@ -4,11 +4,11 @@
 %% RUN CONDITIONS
 
 tunnel_section = 1; %section of tunnel FLDI is probing
-DailyRunNum = 3;
-CampainRunNum = 24;
-PositionRunNumber = 1;
+DailyRunNum = 4;
+CampainRunNum = 28;
+PositionRunNumber = 4;
 x_dist = 16.6;  % streamwise distance from nozzle/test section junction to first beam focus in inches (+-2mm)
-y_dist = 1.50;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
+y_dist = 3.25;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
 z_dist = 0;  % position of tunnel test section centerline relative to FLDI focus (cm)
 obj_lens = 'f=-9mm';
 Gain = 10;  %gain from amplification (if used)
@@ -17,8 +17,8 @@ HLfilter = 'none';  %high or low pass Filter type
 BPfilter = 'no';  % Bandpass filter
 RL = 'none, using photodiodes with built in amplifier'; %[Ohms] terminating resistor
 bitRes = 8;
-num_diaphrams = 3;  % number of diaphrams in ludweig tube
-expected_burst_pressure = '~60Psia'; % tunnel high pressure in Psia
+num_diaphrams = 1;  % number of diaphrams in ludweig tube
+expected_burst_pressure = '~17Psia'; % tunnel high pressure in Psia
 dx1 = '300micron streamwise'; %FLDI beam separation
 dx2 = 2.6e-3; %[m] 
 model = 'empty tunnel'; %The model inserted in the tunnel during the run
@@ -66,7 +66,10 @@ pause;
 
 %% CAPTURE NOISE DATA
  set(ACQ, 'Control', 'single'); %set to single with matlab driver
+    %doesnt seem to work just dont forget to do this by hand.
+    %fprintf(VisaInterface,"VBS 'app.Acquisition.Horizontal.SampleMode=RealTime'")
     invoke(TRG, 'trigger');
+    
     %Note channel A is bigger range.
     [chA_noise, timeMs, chA_noise_info] = invoke(WVE,'readwaveform','C2',true); %grab cha, with the time, and scled to doubles
     [chB_noise, ~, chB_noise_info] = invoke(WVE,'readwaveform','C3',true); %no need to grab time again
@@ -86,7 +89,7 @@ pause;
 %maybe should poll scope for trigger but easier to just click at end of run
 
 %% Collect RUN DATA
-    [chA_run, ~, chA_run_info] = invoke(WVE,'readwaveform','C2',true);
+    [chA_run, timeMs, chA_run_info] = invoke(WVE,'readwaveform','C2',true);
     [chB_run, ~, chB_run_info] = invoke(WVE,'readwaveform','C3',true);
     
 

@@ -1,7 +1,8 @@
 %% Find Matfiles
-cd('D:\FLDI_UMD\Data')
+cd('F:\FLDI_UMD\Data')
 Matfiles = dir('**/*.mat')';
-cd('C:\Users\jcobourn\Documents\GitHub\Focused_Laser_Dif_interf')
+%cd('C:\Users\jcobourn\Documents\GitHub\Focused_Laser_Dif_interf')
+cd('D:\Jack\Documents\GitHub\Focused_Laser_Dif_interf')
 
 %% Load Matfiles
 %using matfiles() fuction, so they don't load totally into %memory
@@ -23,7 +24,7 @@ for i = 1:length(Matfiles)
     else
         RunNumber(i,1) = M(i).Matfiles.CampainRunNum;
     end
-    Numpoints =     
+    %Numpoints =     
     Y(i,1) = M(i).Matfiles.y_dist;
     VOLT(i,:) = [M(i).Matfiles.vmax,M(i).Matfiles.vmin];
     FS(i,1) = M(i).Matfiles.Fs;
@@ -69,6 +70,10 @@ colormap colorcube
 cb3 = colorbar();
 cb3.Ruler.Scale = 'log';
 cb3.Ruler.MinorTick = 'on';
+
+%% Create IMageSc waterfall plot
+[~,I] = sort(Y(:,1));
+Colors = cell2mat(PSDa{:,1}(1,1:length(PSDa{1,1})));
 
 
 %% Create BL prof
