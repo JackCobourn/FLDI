@@ -4,11 +4,11 @@
 %% RUN CONDITIONS
 
 tunnel_section = 1; %section of tunnel FLDI is probing
-DailyRunNum = 4;
-CampainRunNum = 20;
-PositionRunNumber = 2;
+DailyRunNum = 3;
+CampainRunNum = 24;
+PositionRunNumber = 1;
 x_dist = 16.6;  % streamwise distance from nozzle/test section junction to first beam focus in inches (+-2mm)
-y_dist = 0.17;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
+y_dist = 1.50;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
 z_dist = 0;  % position of tunnel test section centerline relative to FLDI focus (cm)
 obj_lens = 'f=-9mm';
 Gain = 10;  %gain from amplification (if used)
@@ -22,9 +22,9 @@ expected_burst_pressure = '~60Psia'; % tunnel high pressure in Psia
 dx1 = '300micron streamwise'; %FLDI beam separation
 dx2 = 2.6e-3; %[m] 
 model = 'empty tunnel'; %The model inserted in the tunnel during the run
-notes = 'chA is ch2';
+notes = {'chA is ch2';'set Both Chanels to 1MOhms'};
 date = date(); %Comment out for testing on a different day
-
+ISOdate = yyyymmdd(datetime(date));
 
 %% Connect Teledyne Ocilloscope
 cd('D:\Jack\Documents\GitHub\Focused_Laser_Dif_interf')
@@ -202,8 +202,9 @@ disp('Saving data...')
 % %save the variables
 % save F:\FLDI_UMD\200204\UTSI_M4_2ptFLDI_y_2_25_inch_02.mat timeMs
 % recordtime chA_run chA_noise chB_run chB_noise chA_run_info chA_noise_info chB_run_info chB_noise_info Fs numSamples bitRes vmax vmin vavg dx1 dx2 tunnel_section x_dist y_dist z_dist Gain HLfilter RL num_diaphrams expected_burst_pressure model NDfilter BPfilter obj_lens notes date DailyRunNum CampainRunNum PositionRunNumber
-folderstring='F:\FLDI_UMD\Data\20200210';
-savestring='UTSI_M4_2ptFLDI_y_0_17_inch_02';
+folderstring=sprintf('F:\\FLDI_UMD\\Data\\%d',ISOdate);
+whole = floor(y_dist); fraction = floor(100*mod(y_dist,1));
+savestring=sprintf('UTSI_M4_2ptFLDI_y_%d_%d_inch_0%d',whole,fraction,PositionRunNumber);
 %mkdir(folderstring);
 cd(folderstring)
 save([folderstring '\' savestring '.mat'],...
@@ -211,7 +212,7 @@ save([folderstring '\' savestring '.mat'],...
     'chA_run_info', 'chA_noise_info','chA_noise_info2', 'chB_run_info', 'chB_noise_info','chB_noise_info2',...
     'timeMs','Fs', 'numSamples', 'bitRes', 'vmax', 'vmin', 'vavg', 'dx1', 'dx2', 'tunnel_section', 'x_dist', 'y_dist', 'z_dist',...
     'Gain', 'HLfilter', 'RL', 'num_diaphrams', 'expected_burst_pressure','model', 'NDfilter', 'BPfilter', 'obj_lens',...
-    'notes', 'date', 'DailyRunNum', 'CampainRunNum', 'PositionRunNumber','-v7.3','-nocompression');
+    'notes', 'date', 'DailyRunNum', 'CampainRunNum', 'PositionRunNumber','ACoupling','BCoupling','AOffset','AOffset','AScale','BScale','-v7.3');
 savefig(fig3,[savestring '.fig']);
 saveas(fig3,savestring,'jpeg')
 disp('DONE!')
