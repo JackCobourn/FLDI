@@ -1,8 +1,9 @@
 %% Find Matfiles
-cd('F:\FLDI_UMD\Data')
+close all
+cd('D:\FLDI_UMD\Data\BL Profile Sweep')
 Matfiles = dir('**/*.mat')';
-%cd('C:\Users\jcobourn\Documents\GitHub\Focused_Laser_Dif_interf')
-cd('D:\Jack\Documents\GitHub\Focused_Laser_Dif_interf')
+cd('C:\Users\jcobourn\Documents\GitHub\Focused_Laser_Dif_interf')
+%cd('D:\Jack\Documents\GitHub\Focused_Laser_Dif_interf')
 
 %% Load Matfiles
 %using matfiles() fuction, so they don't load totally into %memory
@@ -31,9 +32,11 @@ for i = 1:length(Matfiles)
     %CHA{i,1} = M(i).Matfiles.chA_run; lets avoid loading the whole thing
     CHA_TRIM{i,1} = M(i).Matfiles.chA_run(fix((FS(i).*start)):fix((FS(i).*stop)-1),1);        %CHA{i}(fix((FS(i).*start)):fix((FS(i).*stop)-1));
     CHB_TRIM{i,1} = M(i).Matfiles.chB_run(fix((FS(i).*start)):fix((FS(i).*stop)-1),1);
-%     if any(i==[8:length(Matfiles)])
-%         CHA_TRIM{i,1} = CHA_TRIM{i,1}.*1000-500;
-%     end
+    BIT(i,1) = M(i).Matfiles.bitRes;
+    if BIT(i) == 8
+        CHA_TRIM{i,1} = CHA_TRIM{i,1}.*1000; %convert the teleydyne scope results to Volts
+        CHB_TRIM{i,1} = CHB_TRIM{i,1}.*1000; %note offset doesn't matter due to mean subtracted pwelch
+    end
 end
 [~,ordercode] = sort(RunNumber);%reordercode
 % figure out how to deal with noise not recorded for 8A(i) = is(who(M(i).Matfiles,'chA_noise'))
@@ -41,13 +44,24 @@ end
 
 for i = 1:length(Matfiles)
     [PSDa{i,1}, f{i,1}] = pwelch(CHA_TRIM{i,1}-mean(CHA_TRIM{i,1}),ceil(length(CHA_TRIM{i,1})/ham),[],[],fix(FS(i,1)));
+    %calc PSD area
+    PSDArea(i,1) = trapz(PSDa{i,1}).*mean(diff(f{i,1}));
+    PSDNorm{i,1} = PSDa{i,1}./PSDArea(i,1); %normalize to area of 1
+        
+%         if BIT(i) == 15 %account for fs difference
+%             PSDNorm{i,1} = PSDNorm{i,1}*(20/12.5);
+%         elseif BIT(i) == 8
+%             PSDNorm{i,1} = PSDNorm{i,1}*(12.5/20);
+%         end
+        NormResults(i,1) = trapz(PSDNorm{i,1}(1:find(f{i,1}>=f{1,1}(end),1)));
 end
 
+
 %loglog(f,PSDa,'linewidth',2)
-fig1 = figure(1)
+fig1 = figure(1);
 
 for i = 1:length(Matfiles)
-    h(i) = waterfall(f{i,1},Y(i,1),PSDa{i,1}')
+    h(i) = waterfall(f{i,1},Y(i,1),PSDNorm{i,1}');
     hold on
 end
 ax1 = fig1.Children;
@@ -58,22 +72,48 @@ ax1.ZScale = 'log';
 ax1.View = [0 0];
 
 %% Create waterfall scatter plot
-fig3 = figure(3);
-for i = 1:length(Matfiles)
-    h3(i) = scatter(f{i,1},Y(i,1).*ones(size(f{i,1})),15,PSDa{i,1}','filled');
-    hold on
-end
-ax3 = fig3.Children;
-ax3.XScale = 'log';
-xlim([10e3 inf])
-colormap colorcube
-cb3 = colorbar();
-cb3.Ruler.Scale = 'log';
-cb3.Ruler.MinorTick = 'on';
+% fig3 = figure(3);
+% for i = 1:length(Matfiles)
+%     h3(i) = scatter(f{i,1},Y(i,1).*ones(size(f{i,1})),15,PSDa{i,1}','filled');
+%     hold on
+% end
+% ax3 = fig3.Children;
+% ax3.XScale = 'log';
+% xlim([10e3 inf])
+% colormap colorcube
+% cb3 = colorbar();
+% cb3.Ruler.Scale = 'log';
+% cb3.Ruler.MinorTick = 'on';
 
 %% Create IMageSc waterfall plot
-[~,I] = sort(Y(:,1));
-Colors = cell2mat(PSDa{:,1}(1,1:length(PSDa{1,1})));
+[~,Index] = sort(Y(:,1));
+for ii = 1:length(Matfiles)
+PSDedit{ii,1} = PSDNorm{ii,1}(1:length(PSDa{1,1}))';
+end
+%PSDedit(:) = PSDa(:)(1:length(PSDa{1,1}))'; is there a way to do above in
+%1 line? could use cell2mat(PSDa) and then remap()
+Colors = cell2mat(PSDedit);
+
+fig3 = figure(3);
+imagesc('CData',log10(Colors(Index,:)))
+ax3 = fig3.Children;
+%xlim([1000,6000] )
+xlim([0,inf])
+ylim([0.5,length(Matfiles)+0.5])
+colormap jet
+ cb3 = colorbar();
+ tickvals = cb3.TickLabels;
+ for ii = 1:length(tickvals)
+     tickname{ii} = sprintf('10^{%d}',str2double(tickvals{ii}));
+ end
+ cb3.TickLabels = tickname;
+ for ii = 1:length(Matfiles)
+     text(100,ii,sprintf('y = %.2f, %d bit',Y(Index(ii)),BIT(Index(ii))))
+ end
+ 
+
+
+
 
 
 %% Create BL prof
@@ -101,7 +141,7 @@ Uc(i,1) = (dx2)/DT(i,1);
 % plot(lag,cross_cor)
 end
 fig2 = figure(2);
-h2 = scatter(Uc(:,1),25.4*Y(:,1),'*');
+h2 = scatter(Uc(:,1),25.4*Y(:,1),'k*');
 hold on
 xlabel('Velocity (m/s)')
 ylabel('Height above floor (mm)')
