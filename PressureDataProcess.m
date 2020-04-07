@@ -25,7 +25,7 @@ opts.VariableNames = {'DValvePct' 'VValvePct' 'Inlet' 'TotalP' 'StaticP' 'Supply
         
 fs = 12.5e3;
 
-for ii = 20:length(PressureData)
+for ii = 1:length(PressureData)
     %if statement to select runs with useful data
     if PressureData(ii).Useful
         

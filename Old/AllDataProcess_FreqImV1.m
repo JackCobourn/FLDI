@@ -113,20 +113,21 @@ for ii = 1:length(M)
     clear t Temp Trigger x y P fig
 end
 
-%% gets rid of runs at different Re
-for ii = 1:length(M)
-if M(ii).Matfiles.num_diaphrams ~= 3
-    WrongReIndex(ii) = true;
-else
-    WrongReIndex(ii) = false;
-end
-end
-Re = M(WrongReIndex);
-M = M(~WrongReIndex);
-clear WrongReIndex%% move runs accosciated with different Re to a different matfile struct
-
+%% move runs accosciated with different Re to a different matfile struct
+%gets rid of runs at different Re
+% for ii = 1:length(M)
+% if M(ii).Matfiles.num_diaphrams ~= 3
+%     WrongReIndex(ii) = true;
+% else
+%     WrongReIndex(ii) = false;
+% end
+% end
+% Re = M(WrongReIndex);
+% M = M(~WrongReIndex);
+% clear WrongReIndex
 
 %% Create Usable Cell Arrays
+
 
 for ii = 1:length(M)
     Details{ii,1} = whos(M(ii).Matfiles);     
@@ -173,45 +174,23 @@ for ii = 1:length(M)
     ii   
     if BIT(ii) == 15
         [PSDa{ii,1}, f{ii,1}] = pwelch(CHA_TRIM{ii,1}-mean(CHA_TRIM{ii,1}),...
-            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
-        [PSDb{ii,1}, f{ii,1}] = pwelch(CHB_TRIM{ii,1}-mean(CHB_TRIM{ii,1}),...
-            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
-        [MSC{ii,1}, f2{ii,1}] = mscohere(CHA_TRIM{ii,1},...
-            CHB_TRIM{ii,1},hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
+            pow2(13),[], pow2(13)*12.5,fix(FS(ii,1)));
+        [MSC{ii,1}, f2{ii,1}] = mscohere(CHA_TRIM{ii,1}-mean(CHA_TRIM{ii,1}),...
+            CHB_TRIM{ii,1}-mean(CHB_TRIM{ii,1}),pow2(13),[], pow2(13),fix(FS(ii,1)));
     elseif BIT(ii) == 8
         [PSDa{ii,1}, f{ii,1}] = pwelch(CHA_TRIM{ii,1}-mean(CHA_TRIM{ii,1}),...
-            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
-        [PSDb{ii,1}, f{ii,1}] = pwelch(CHB_TRIM{ii,1}-mean(CHB_TRIM{ii,1}),...
-            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
-        [MSC{ii,1}, f2{ii,1}] = mscohere(CHA_TRIM{ii,1},...
-            CHB_TRIM{ii,1},hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
+            pow2(14),[], pow2(13)*20,fix(FS(ii,1)));
+        [MSC{ii,1}, f2{ii,1}] = mscohere(CHA_TRIM{ii,1}-mean(CHA_TRIM{ii,1}),...
+            CHB_TRIM{ii,1}-mean(CHB_TRIM{ii,1}),pow2(14),[], pow2(14),fix(FS(ii,1)));
 
     end
 end
-fig10 = figure(10)
-fig10.Position = [-1000,250,500,500]; fig10.WindowStyle = 'normal'; fig10.WindowState = 'Maximized';
 for ii = 1:length(M)
     ii
-    clf(fig10)
-     
-    ax1 = axes('Units','normalized','Position',[0.05 0.05 0.45 .90]);
-    loglog(f{ii,1},PSDa{ii,1},f{ii,1},PSDb{ii,1})
-    x=logspace(4,6,10000); y=2e5*x.^(-5/3); hold on; loglog(x,y,'k--'); hold off;
-    %ax1.YAxis.Scale='log'; ax1.XAxis.Scale='log';
-    
-    ax2 = axes('Units','normalized','Position',[0.525 0.05 0.45 .90]);
+    figure(10)
     semilogx(f2{ii,1},MSC{ii,1})
-    yline(.7,'k--');
-    freqCutOff = f2{ii,1}(find((f2{ii,1}<1e6 & MSC{ii,1}>0.7),1,'last'));
-    xline(freqCutOff,'k');
-    
-    axes(ax1);
-    xline(freqCutOff,'k');
-    
-    fig10.WindowStyle = 'normal'; fig10.WindowState = 'Maximized';
     drawnow
-    pause(3)
-   
+    pause(2)
 end
 
 % cellfun(@(X) mean(diff(X)),f)
@@ -326,10 +305,10 @@ for ii = 1:length(M)
 %find max of xcorr and index
 [cc(ii,1),I(ii,1)] = max(cross_cor{ii,1});
 %check if xcorr peak is high enough?
-if cc(ii,1)>0.3
-    lagDiff(ii,1) = lag{ii,1}(I(ii,1));
+if cc{ii,1}>0.3
+    lagDiff(ii,1) = lag{ii,1}(I{ii,1});
     %3 pt gaussian interpolation, to get a more exact velocity
-    peakOffset(ii,1) = ((log(cross_cor{ii,1}(I(ii,1)-1)))-(log(cross_cor{ii,1}(I(ii,1)+1))))/(2*((log(cross_cor{ii,1}(I(ii,1)-1)))+(log(cross_cor{ii,1}(I(ii,1)+1)))-2*(log(cc(ii,1)))));
+    peakOffset(ii,1) = ((log(cross_cor{ii,1}(I{ii,1}-1)))-(log(cross_cor{ii,1}(I{ii,1}+1))))/(2*((log(cross_cor{ii,1}(I{ii,1}-1)))+(log(cross_cor{ii,1}(I{ii,1}+1)))-2*(log(cc{ii,1}))));
     %find delta t
     DT(ii,1) = abs((lagDiff(ii,1)+peakOffset(ii,1))/FS(ii,1));
 else
@@ -337,12 +316,12 @@ else
     DT = NaN;
 end
 %disturbance velocity, [m/s]
-Uc(ii,1) = M(ii).dx2/1000/DT(ii,1);
+Uc(ii,1) = dx2(ii)/1000/DT(ii,1);
+
 % figure(4)
 % clf
 % plot(lag,cross_cor)
 end
-
 fig2 = figure(2);
 h2 = scatter(Uc(:,1),25.4*Y(:,1),25,[M.Re]','filled');
 cmap = colormap(jet);
@@ -354,43 +333,6 @@ caxis([-inf,inf])
 cb2.Label.String = 'Re/x (m^{-1})';
 xlabel('Velocity (m/s)')
 ylabel('Height above floor (mm)')
-
-%%% Overplot with BL Calcs
-%Non-dim
-Uc_star = Uc/mean(Uc(arrayfun(@(X) X == 3.24,[M.Ydist])));
-Y_star = Y/3.24;
-cfit1 = fit(Uc_star,Y_star,'power1');
-ft2 = fittype(@(a,x) a*x.^(7));
-cfit2 = fit(Uc_star,Y_star,ft2,'StartPoint',1);
-ft3 = fittype(@(a,x) a*x.^(9));
-cfit3 = fit(Uc_star,Y_star,ft3,'StartPoint',1);
-
-fig7 = figure(7);
-xlabel('Velocity [m/s]','FontSize',30)
-ylabel('Height above floor [mm]','FontSize',30)
-hold on
-u = linspace(0.01,1,1001);
-Uvec = u*mean(Uc(arrayfun(@(X) X == 3.24,[M.Ydist])));
-h2_cf1 = plot(Uvec,3.24*25.4*cfit1(u),'k--','LineWidth',2);
-h2_cf2 = plot(Uvec,3.24*25.4*cfit2(u),'k:','LineWidth',2);
-h2_cf3 = plot(Uvec,3.24*25.4*cfit3(u),'k-.','LineWidth',2);
-ylim([0,100]);
-yline(3.24*25.4*cfit1(0.9900),'--')
-text(300,5+3.24*25.4*cfit1(0.9900),['\delta_{99}=' sprintf('%.2fmm',3.24*25.4*cfit1(0.9900))],'FontSize',30)
-grid on
-h2 = scatter(Uc,25.4*Y,25,[M.Re]','filled');
-cmap = colormap(jet);
-%cmap = [1  1  1 ; cmap]; %hide low re
-colormap(cmap)
-cb2 = colorbar();
-%caxis([1.4e6,inf])
-caxis([-inf,inf])
-cb2.Label.String = 'Re/x (m^{-1})';
-C1 = coeffvalues(cfit1); C2 = coeffvalues(cfit2); C3 = coeffvalues(cfit3);
-cfstring1 = ['$$y^*=' sprintf('%.2f',C1(1)) 'u^{* ' sprintf('%.2f',C1(2)) '}$$'];
-cfstring2 = ['$$y^*=' sprintf('%.2f',C2(1)) 'u^{*7}$$'];
-cfstring3 = ['$$y^*=' sprintf('%.2f',C3(1)) 'u^{*9}$$'];
-l3 = legend([h2,h2_cf2,h2_cf3,h2_cf1],'Boundary Layer Profile',cfstring2,cfstring3,cfstring1,'Location','Northwest','Interpreter','latex','FontSize',30);
 
 %% Print Voltages and Delta Ts
 writematrix(VOLT,'D:\FLDI_UMD\Voltages.xlsx');
