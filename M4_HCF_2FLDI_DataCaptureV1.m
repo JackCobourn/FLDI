@@ -9,20 +9,21 @@ ISOdate = yyyymmdd(datetime(date));
 
 %run numbers
 DailyRunNum = 1;
-CampainRunNum = 28;
-PositionRunNumber = 4;
+CampainRunNum = 1;
+PositionRunNumber = 1;
 
 %position
 tunnel_section = 1; %section of tunnel FLDI is probing
-x_dist = 16.6;  % streamwise distance from nozzle/test section junction to first beam focus in inches (+-2mm)
-y_dist = 3.25;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
+x_dist = NaN;  % streamwise distance from nozzle/test section junction to first beam focus in inches (+-2mm)
+rail_pos = 25.4*7; % position of rail measured on the stands. should be laser position from back window.
+y_dist = 10*25.4;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
 z_dist = 0;  % position of tunnel test section centerline relative to FLDI focus (cm)
 
 %FLDI Config
-dx = [388 424 735 773];
+dx = [285 316 683 714];
 dx1a = 0.00738*(dx(2)-dx(1))/1000; %FLDI beam separation
 dx1b =  0.00738*(dx(4)-dx(3))/1000;
-dx2 =  0.00738*(mean(dx(3,4))-mean(dx(2,1)))/1000; %[m] 
+dx2 =  0.00738*(mean(dx([3,4]))-mean(dx([1,2])))/1000; %[m] 
 
 obj_lens = 'f=-9mm';
 Gain = 0;  %gain from amplification (if used)
@@ -36,8 +37,8 @@ bitRes = 8;
 num_diaphrams = 1;  % number of diaphrams in ludweig tube
 expected_burst_pressure = '~17Psia'; % tunnel high pressure in Psia
 
-model = 'HCF'; %The model inserted in the tunnel during the run
-notes = {'chA is ch2';'set Both Chanels to 1MOhms'};
+model = 'NO MODEL'; %The model inserted in the tunnel during the run
+notes = {'chA is ch2, is upstream beam and downstream transducer';'set Both Chanels to 1MOhms'};
 
 
 %% Connect Teledyne Ocilloscope
@@ -135,22 +136,25 @@ set(ACQ, 'Control', 'single'); %set to single with matlab driver
 %Note: this should only be run on the steady-state part of the run
 %Another note: run this for the noise too so they can be compared
 
-ham=100; %number of divisions for hamming windows
-start = input(); %[s] trim window start
-stop=0.2; %[s] trim window stop
+start = input('input start time'); %[s] trim window start
+stop=input('input stop time'); %[s] trim window stop
 %compute spectra for channel A
 chA_run_trim = (chA_run(fix((Fs*start)):fix((Fs*stop)-1)));
+chA_noise_trim = (chA_noise(fix((Fs*start)):fix((Fs*stop)-1)));
 
-[PSDa, f] = pwelch(CHA_TRIM{ii,1}-mean(CHA_TRIM{ii,1}),...
-            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(Fs(ii,1)));
-[PSDna, fn] = pwelch((chA_noise-mean(chA_noise)),numSamples/ham,[],[],Fs);
+[PSDa, f] = pwelch(chA_run_trim-mean(chA_run_trim),...
+            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(Fs));
+[PSDna, fn] =  pwelch(chA_noise_trim-mean(chA_noise_trim),...
+            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(Fs));
 
 %compute spectra for channel B
 chB_run_trim = (chB_run(fix((Fs*start)):fix((Fs*stop))-1));
-% chB_noise_trim = (chB_noise((sps*start)+1:(sps*stop)-1));
-[PSDb, f] = pwelch(chB_run_trim-mean(chB_run_trim),ceil(length(chB_run_trim)/ham),[],[],ceil(Fs));
-[PSDnb, fn] = pwelch((chB_noise-mean(chB_noise)),numSamples/ham,[],[],Fs);
-
+ chB_noise_trim = (chB_noise(fix((Fs*start)):fix((Fs*stop))-1));
+ 
+[PSDb, f] = pwelch(chB_run_trim-mean(chB_run_trim),...
+            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(Fs));
+[PSDnb, fn] = pwelch(chB_noise_trim-mean(chB_noise_trim),...
+            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(Fs));
 fig3 = figure(3)
 clf
 loglog(f,PSDa,'linewidth',2)
@@ -195,3 +199,20 @@ plot(lag,cross_cor)
 disp('Disconnecting')
 % Disconnect device object from hardware.
 disconnect(Wavesurfer10)
+
+%% SAVE
+disp('Saving data...')
+% %save the variables
+% save F:\FLDI_UMD\200204\UTSI_M4_2ptFLDI_y_2_25_inch_02.mat timeMs
+folderstring=sprintf('F:\\FLDI_HCF\\Data\\%d',ISOdate);
+whole = floor(y_dist); fraction = floor(100*mod(y_dist,1));
+savestring=sprintf('M4_2ptFLDI_HCF_y_%d_%d_inch_0%d',whole,fraction,PositionRunNumber);
+%mkdir(folderstring);
+cd(folderstring)
+save([folderstring '\' savestring '.mat'],'-v7.3');
+fid = fopen([folderstring '\' savestring '.txt'],'w');
+fprintf(fid,'Uc = %.4f',Uc);
+fclose(fid);
+%savefig(fig3,[savestring '.fig']);
+%saveas(fig3,savestring,'jpeg')
+disp('DONE!')
