@@ -1,6 +1,6 @@
 %% Find Matfiles
 close all
-cd('D:\FLDI_UMD\Data')
+cd('D:\FLDI_HCF\Data')
 Matfiles = dir('**/*.mat')';
 cd('C:\Users\jcobourn\Documents\GitHub\Focused_Laser_Dif_interf')
 %cd('D:\Jack\Documents\GitHub\Focused_Laser_Dif_interf')
