@@ -1,25 +1,19 @@
 %Process large Block of Pressure Data
-cd('D:\FLDI_UMD\PressureData')
-PressureFiles = dir('**/*_UMD')';
+cd('I:\FLDI_HCF_Workable\Pressure')
+PressureFiles = dir('**/*_*')';
 
 for ii = 1:length(PressureFiles)
     PressureData(ii).Fullname = [PressureFiles(ii).folder,'\',PressureFiles(ii).name];
     PressureData(ii).RunNumber = ii;
-    if any(PressureData(ii).RunNumber == [12 21 27])
-        BadRun(ii) = 1;
-    else
-        BadRun(ii) = 0;
-    end
- 
+    
     if PressureFiles(ii).bytes == 277
         PressureData(ii).Useful = 0;
     else
         PressureData(ii).Useful = 1;
     end
 end
-PressureData = PressureData(~BadRun);
 
-%handel some wierd matlab inport rules
+%handle some weird matlab inport rules
 opts = detectImportOptions(PressureData(1).Fullname);
 opts.VariableNames = {'DValvePct' 'VValvePct' 'Inlet' 'TotalP' 'StaticP' 'SupplyP' 'VacuumP' 'FatPipeP' 'DriverA' 'DriverB' 'DriverC' 'DriverD' 'CameraTrigger'};
         
