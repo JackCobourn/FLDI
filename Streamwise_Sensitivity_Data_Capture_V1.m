@@ -11,22 +11,23 @@ ISOdate = yyyymmdd(datetime(date));
 %position
 tunnel_section = 1; %section of tunnel FLDI is probing
 
-z_pos = input('enter current position from centerline in 1/64 inches = , positive for catch side');
-z_pos_val = x_pos/64;
-y_FLDI = [];
-y_jet = [];
-x_FLDI = [];
-X_jet = [];
+z_pos = [11]; %input('enter current position from centerline in 1/64 inches = , positive for catch side');
+z_pos_dec = 0/64;
+y_FLDI = [10+28/64];
+y_jet = [10+40/64];
+x_FLDI = [6+1/8];
+X_jet = [4]; %streamwise from FLID
+
 %save Location
 folderstring='C:\Users\jack\Documents\FLDI FastWrite';
 Runs = length(dir([folderstring filesep '**\*.mat']));
 
-savestring=sprintf('Sensitivity_2ptFLDI_RunNum=%u_z=%i_64',Runs+1,z_pos);
+savestring=sprintf('Sensitivity_2ptFLDI_RunNum=%u_z=%f',Runs+1,z_pos);
 
 %FLDI Config
 
-dx = [453 490 870 908];
-dy = [350 350 162 162];
+dx = [567.9, 605.1 , 909.8, 947.2];
+dy = [471.1, 471.2, 473.4, 473.1];
 dx1a = 0.00738*(dx(2)-dx(1))/1000; %FLDI beam separation
 dy1a = 0.00738*(dy(2)-dy(1))/1000;
 dx1b =  0.00738*(dx(4)-dx(3))/1000;
@@ -54,9 +55,9 @@ filtenab = 0; %input('High-Pass filter enabled? (Y/N): ');
 vavg = (vmax+vmin)./2.0;
 vsep = vmax - vavg; % range of instrument for both channels
 
-
+Pressure = input('read pressure in volts'); %V
 %% Connect Teledyne Ocilloscope
-cd('D:\Jack\Documents\GitHub\Focused_Laser_Dif_interf')
+cd('C:\Users\Jack\Documents\GitHub\Focused_Laser_Dif_interf')
 cd('.\oscilloscope')
 [VisaInterface, Wavesurfer10] = OscopeVisaConnect(); %get interface and device
 VSA = VisaInterface; %simplify code with shorthands
@@ -96,10 +97,10 @@ set(ACQ, 'Control', 'single'); %set to single with matlab driver
     
 %% Plot Signal
 disp('Plotting Signal')
-skipplot = linspace(1,length(timeMS),1000);
+skipplot = linspace(1,length(timeMs),1000);
 figure(1)
 clf
-plot(timeMs(skipplot),chA_run(skipplot),timeMs(skipplot),chB_run(skipplot),'k:')
+plot(timeMs(:),chA(:),timeMs(:),chB(:),'k:')
 title('Channel A & B run Signal');
 xlabel('Time (ms)');
 ylabel('Voltage (mV)');
