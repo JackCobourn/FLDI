@@ -80,18 +80,18 @@ for ii = 1:length(M)
     ii   
     if BIT(ii) == 15
         [PSDa{ii,1}, f{ii,1}] = pwelch(CHA_TRIM{ii,1}-mean(CHA_TRIM{ii,1}),...
-            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
+            hann(pow2(18)),0.75*pow2(18), pow2(18),fix(FS(ii,1)));
         [PSDb{ii,1}, f{ii,1}] = pwelch(CHB_TRIM{ii,1}-mean(CHB_TRIM{ii,1}),...
-            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
+            hann(pow2(18)),0.75*pow2(18), pow2(18),fix(FS(ii,1)));
         [MSC{ii,1}, f2{ii,1}] = mscohere(CHA_TRIM{ii,1},...
-            CHB_TRIM{ii,1},hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
+            CHB_TRIM{ii,1},hann(pow2(18)),0.75*pow2(18), pow2(18),fix(FS(ii,1)));
     elseif BIT(ii) == 8
         [PSDa{ii,1}, f{ii,1}] = pwelch(CHA_TRIM{ii,1}-mean(CHA_TRIM{ii,1}),...
-            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
+            hann(pow2(18)),0.75*pow2(18), pow2(18),fix(FS(ii,1)));
         [PSDb{ii,1}, f{ii,1}] = pwelch(CHB_TRIM{ii,1}-mean(CHB_TRIM{ii,1}),...
-            hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
+            hann(pow2(18)),0.75*pow2(18), pow2(18),fix(FS(ii,1)));
         [MSC{ii,1}, f2{ii,1}] = mscohere(CHA_TRIM{ii,1},...
-            CHB_TRIM{ii,1},hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
+            CHB_TRIM{ii,1},hann(pow2(18)),0.75*pow2(18), pow2(18),fix(FS(ii,1)));
 
     end
 end
@@ -150,22 +150,23 @@ end
 %% Create IMageSc waterfall plot
 [~,Index] = sortrows(struct2table(struct('Z',[Z])),{'Z'},{'descend'});
 
-% for ii = 1:length(M)
-% PSDedit{ii,1} = PSDNorm{ii,1}(1:length(PSDa{1,1}))';
-% end
+for ii = 1:length(M)
+PSDedit{ii,1} = PSDa{ii,1}(1:length(PSDa{1,1}))';
+
+end
 %PSDedit(:) = PSDa(:)(1:length(PSDa{1,1}))'; is there a way to do above in
 %1 line? could use cell2mat(PSDa) and then remap()
-Colors = cell2mat(PSDa')';
+Colors = cell2mat(PSDedit);
 %Colors = cell2mat(PSDa')';
 fig3 = figure(3);
-imagesc('XData',f{1,1},'CData',log10(Colors(Index)));
+imagesc('XData',f{1,1},'CData',log10(Colors(Index,:)));
 ax3 = fig3.Children;
 grid on
 
 %set colormap
 colormap jet
  cb3 = colorbar();
- caxis([-14,-8])
+ caxis([-9,-4])
  tickvals = cb3.Ticks;
  for ii = 1:length(tickvals)
      tickname{ii} = sprintf('10^{%.1f}',tickvals(ii));

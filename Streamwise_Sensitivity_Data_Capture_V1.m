@@ -12,7 +12,7 @@ ISOdate = yyyymmdd(datetime(date));
 %position
 tunnel_section = 1; %section of tunnel FLDI is probing
 
-z_pos = [6]; %input('enter current position from centerline in 1/64 inches = , positive for catch side');
+z_pos = input('enter current position from throw side  wall in inches = , '); %positive for catch side
 y_FLDI = [10+28/64];
 y_jet = [10+40/64];
 x_FLDI = [6+1/8];
@@ -47,10 +47,10 @@ bitRes = 8;
 notes = {'chA is ch2, is upstream beam and downstream transducer';'set Both Chanels to 1MOhms'};
 
 %Chanels
-vmax(1) = 142; %input('Enter the ch A maximum voltage:');
-vmin(1) = 26.2;%input('Enter the ch A minimum voltage:');
-vmax(2) = 134;%input('Enter the ch B maximum voltage:');
-vmin(2) = 30.9;%input('Enter the ch B minimum voltage:');
+vmax(1) = 142.6; %input('Enter the ch A maximum voltage:');
+vmin(1) = 25.6;%input('Enter the ch A minimum voltage:');
+vmax(2) = 136.5;%input('Enter the ch B maximum voltage:');
+vmin(2) = 31.2;%input('Enter the ch B minimum voltage:');
 filtenab = 0; %input('High-Pass filter enabled? (Y/N): ');
 vavg = (vmax+vmin)./2.0;
 vsep = vmax - vavg; % range of instrument for both channels
@@ -144,7 +144,7 @@ chB_run_trim = (chB_run(fix((Fs*start)):fix((Fs*stop))-1));
             hann(pow2(13)),0.75*pow2(13), pow2(13),fix(Fs));
 [PSDnb, fn] = pwelch(chB_noise_trim-mean(chB_noise_trim),...
             hann(pow2(13)),0.75*pow2(13), pow2(13),fix(Fs));
-fig3 = figure(3)
+fig3 = figure(3);
 clf
 loglog(f,PSDa,'linewidth',2)
 hold on;
