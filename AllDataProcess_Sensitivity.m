@@ -1,11 +1,12 @@
 %% Find Matfiles
 close all
-cd('C:\Users\jack\Documents\FLDI FastWrite')
+%cd('C:\Users\jack\Documents\FLDI FastWrite')
+cd('L:\FLDI_Sensitivity_study\Data');
 Matfiles = dir('**/*.mat')';
 %cd('C:\Users\jcobourn\Documents\GitHub\Focused_Laser_Dif_interf') %work
 %cd('C:\Users\Jack\Documents\GitHub\Focused_Laser_Dif_interf') %laptop
 %cd('D:\Jack\Documents\Focused_Laser_Dif_interf') %homepc
-PCString = 'C:\Users\Jack\Documents\GitHub\Focused_Laser_Dif_interf';
+PCString = 'D:\Jack\Documents\Focused_Laser_Dif_interf';
 cd(PCString);
 %% Load Matfiles
 %using matfiles() fuction, so they don't load totally into %memory
@@ -151,7 +152,7 @@ end
 [~,Index] = sortrows(struct2table(struct('Z',[Z])),{'Z'},{'descend'});
 
 for ii = 1:length(M)
-PSDedit{ii,1} = PSDa{ii,1}(1:length(PSDa{1,1}))';
+PSDedit{ii,1} = mean([PSDa{ii,1}(1:length(PSDa{1,1}))';PSDb{ii,1}(1:length(PSDb{1,1}))'],1);
 
 end
 %PSDedit(:) = PSDa(:)(1:length(PSDa{1,1}))'; is there a way to do above in
@@ -166,7 +167,7 @@ grid on
 %set colormap
 colormap jet
  cb3 = colorbar();
- caxis([-9,-4])
+ caxis([-8,-4.5])
  tickvals = cb3.Ticks;
  for ii = 1:length(tickvals)
      tickname{ii} = sprintf('10^{%.1f}',tickvals(ii));
@@ -186,10 +187,10 @@ Ax3.YAxis.TickDirection = 'out';
  for ii = 1:length(M)
      yticklab(ii) = {sprintf('Run %u, z=%.2f',M(ii).Matfiles.Runs+1,M(ii).Matfiles.z_pos)};
  end
-Ax3.YTickLabel = yticklab;
+Ax3.YTickLabel = yticklab(Index);
 
 %set x
-xlim([0,2e6])
+xlim([0,2e5])
 xlabel('Frequency [Hz]')
 Ax3.XAxis.TickDirection = 'out'; Ax3.XAxis.TickLength = [0.005,0.01];
 %Did all this with the XDATA command
@@ -205,7 +206,7 @@ Ax3.XAxis.TickDirection = 'out'; Ax3.XAxis.TickLength = [0.005,0.01];
 fig1 = figure(1);
 
 for ii = 1:length(M)
-    h(ii) = waterfall(f{ii,1},M(ii).Matfiles.CampainRunNum,PSDa{ii,1}');
+    h(ii) = waterfall(f{ii,1},M(ii).Matfiles.Runs+1,PSDa{ii,1}');
     hold on
 end
 ax1 = fig1.Children;
@@ -337,12 +338,12 @@ fig6 = figure(6);
 sgtitle([{'FLDI spectra for runs with significant velocity spread'};{'y = 2.50'}]) ;
 for ii = 1:length(M)
     subplot(ceil(sqrt(length(M))),ceil(sqrt(length(M))),ii)
-    loglog(f{ii,1}, PSDNorm{ii,1})
+    loglog(f{Index(ii),1}, PSDa{Index(ii),1})
     legend('Channel A FFT');
     grid on
     xlabel('f [Hz]')
     ylabel('Power')
-    title(sprintf('Run Number %g, Ux = %.2f', M(ii).RunNumber,Uc(ii)))
+    title(sprintf('Run Number %g, Z=%.2f', M(Index(ii)).Matfiles.Runs+1,Z(Index(ii))))
 end
 
 %% Plot corrilations
