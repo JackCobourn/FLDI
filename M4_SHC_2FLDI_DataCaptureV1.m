@@ -14,30 +14,24 @@ PositionRunNumber = 1;
 
 %position
 tunnel_section = 1; %section of tunnel FLDI is probing
-% x_dist = 25.4*(6+6/32);  % streamwise distance model mount to forward laser position (+-2mm)
-% rail_pos = 25.4*9.5; % position of rail measured on the stands. should be laser position from back window.
-% y_dist = (10+59/64)*25.4;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
  z_dist = 0;  % position of tunnel test section centerline relative to FLDI focus (cm)
 
-xoutside = [6+4.5/64 6+5/64];
-youtside = [4+44/64 4+44/64];
+xoutside = [7+54/64 8+3/64];
+youtside = [5+0/64 4+60/64];
 
-xinside = NaN;
-yinside = NaN;
+xinside = 10-36.3;
+yinside = 10+8.5/64;
 
+temp_outside = 82;
+temp_inside = 73;
 
 %save Location
-folderstring='C:\Users\jack\Documents\FLDI FastWrite';
-Runs = length(dir([folderstring filesep '**\*.mat']));
+folderstring=sprintf('F:\\FLDI_SHC_202006\\Data\\%d',ISOdate);
+savestring=sprintf('M4_2ptFLDI_SHC_CRun_%u_DRun_%u',CampainRunNum,DailyRunNum);
 
-if isnan(xinside)
-    savestring=strrep(sprintf('Sensitivity_2ptFLDI_RunNum=%u_xoutside=%.2f',CampainRunNum,xoutside(1)),'.',',');
-else
-    savestring=strrep(sprintf('Sensitivity_2ptFLDI_RunNum=%u_xinside=%.2f',CampainRunNum,xinside),'.',',');
-end
 %FLDI Config
-dx = [];
-dy = [];
+dx = [154.555868716406,196.400845854702,537.399782104387,579.562214091555];
+dy = [543.057846345564,542.592288813201,542.793003681600,542.748027776671];
 dx1a = 0.00738*(dx(2)-dx(1))/1000; %FLDI beam separation
 dy1a = 0.00738*(dy(2)-dy(1))/1000;
 dx1b =  0.00738*(dx(4)-dx(3))/1000;
@@ -63,7 +57,7 @@ notes = {'chA is ch2, is upstream beam and downstream transducer';'set Both Chan
 
 
 %% Connect Teledyne Ocilloscope
-cd('D:\Jack\Documents\GitHub\Focused_Laser_Dif_interf')
+cd('C:\Users\Jack\Documents\GitHub\Focused_Laser_Dif_interf')
 cd('.\oscilloscope')
 [VisaInterface, Wavesurfer10] = OscopeVisaConnect(); %get interface and device
 VSA = VisaInterface; %simplify code with shorthands
@@ -193,7 +187,7 @@ legend('Steady Flow: A','Steady Flow: B','Flow Off')
 hold off;
 
 %% compute cross correlation
-[cross_cor,lag] = xcorr(chA_run_trim-mean(chA_run_trim),-(chB_run_trim-mean(chB_run_trim)), 'coeff');
+[cross_cor,lag] = xcorr(chA_run_trim-mean(chA_run_trim),(chB_run_trim-mean(chB_run_trim)), 'coeff');
 %find max of xcorr and index
 [cc,I] = max(cross_cor);
 %check if xcorr peak is high enough?
@@ -230,13 +224,13 @@ cd(folderstring)
 if isfile([savestring '.fig']) || isfile([savestring '.jpg']) || isfile([folderstring '\' savestring '.mat'])
     error('File Exists: cannot overwrite')
 end
-if ~exist(fig3)
+if ~exist('fig3','var')
     fig3 = figure(3);
 end
 savefig(fig3,[savestring '.fig']);
 saveas(fig3,savestring,'jpeg');
 clear fig3
-save([folderstring '\' savestring '.mat'],'-v7.3');
+save([folderstring '\' savestring '.mat'],'-v7.3','-append');
 fid = fopen([folderstring '\' savestring '.txt'],'a');
 fprintf(fid,'Uc = %.4f',Uc);
 fclose(fid);
