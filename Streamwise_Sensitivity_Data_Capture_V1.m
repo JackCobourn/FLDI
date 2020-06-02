@@ -47,10 +47,10 @@ bitRes = 8;
 notes = {'chA is ch2, is upstream beam and downstream transducer';'set Both Chanels to 1MOhms'};
 
 %Chanels
-vmax(1) = 142.6; %input('Enter the ch A maximum voltage:');
-vmin(1) = 25.6;%input('Enter the ch A minimum voltage:');
-vmax(2) = 136.5;%input('Enter the ch B maximum voltage:');
-vmin(2) = 31.2;%input('Enter the ch B minimum voltage:');
+vmax(1) = 140.0; %input('Enter the ch A maximum voltage:');
+vmin(1) = 26.4;%input('Enter the ch A minimum voltage:');
+vmax(2) = 132.3;%input('Enter the ch B maximum voltage:');
+vmin(2) = 29.5;%input('Enter the ch B minimum voltage:');
 filtenab = 0; %input('High-Pass filter enabled? (Y/N): ');
 vavg = (vmax+vmin)./2.0;
 vsep = vmax - vavg; % range of instrument for both channels

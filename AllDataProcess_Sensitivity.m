@@ -1,12 +1,12 @@
 %% Find Matfiles
 close all
-%cd('C:\Users\jack\Documents\FLDI FastWrite')
-cd('L:\FLDI_Sensitivity_study\Data');
+cd('C:\Users\jack\Documents\FLDI FastWrite')
+%cd('L:\FLDI_Sensitivity_study\Data');
 Matfiles = dir('**/*.mat')';
 %cd('C:\Users\jcobourn\Documents\GitHub\Focused_Laser_Dif_interf') %work
 %cd('C:\Users\Jack\Documents\GitHub\Focused_Laser_Dif_interf') %laptop
 %cd('D:\Jack\Documents\Focused_Laser_Dif_interf') %homepc
-PCString = 'D:\Jack\Documents\Focused_Laser_Dif_interf';
+PCString = 'C:\Users\Jack\Documents\GitHub\Focused_Laser_Dif_interf';
 cd(PCString);
 %% Load Matfiles
 %using matfiles() fuction, so they don't load totally into %memory
@@ -135,7 +135,7 @@ for ii = 1:length(M)
     grid on
     xlabel('t [s]')
     ylabel('Voltage [mV]')
-    title(sprintf('Run Number %g, Ux = %.2f', M(ii).RunNumber,Uc(ii)))
+    title(sprintf('Run Number %g, Z=%.2f', M(Index(ii)).Matfiles.Runs+1,Z(Index(ii))))
 end
 
 %% Plot Spectra
