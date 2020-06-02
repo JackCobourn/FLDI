@@ -2,7 +2,7 @@
 % Jack Cobourn cw 20200601
 % Using: Newport LBP2-VIS2
 
-BP_File = 'C:\Users\Jack\Desktop\20200601_PreRun1_0001.ascii.csv';
+BP_File = 'F:\FLDI_SHC_202006\BP\20200602\20200602_PreRun1_0001.ascii.csv';
 BP = csvread(BP_File);
 imshow(BP,[])
 
