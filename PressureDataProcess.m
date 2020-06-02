@@ -1,5 +1,5 @@
 %Process large Block of Pressure Data
-cd('I:\FLDI_HCF_Workable\Pressure')
+cd('J:\FLDI_HCF_Raw_202004\Pressures')
 PressureFiles = dir('**/*_*')';
 
 for ii = 1:length(PressureFiles)
@@ -14,7 +14,7 @@ for ii = 1:length(PressureFiles)
 end
 
 %handle some weird matlab inport rules
-opts = detectImportOptions(PressureData(1).Fullname);
+opts = detectImportOptions(PressureData(14).Fullname);
 opts.VariableNames = {'DValvePct' 'VValvePct' 'Inlet' 'TotalP' 'StaticP' 'SupplyP' 'VacuumP' 'FatPipeP' 'DriverA' 'DriverB' 'DriverC' 'DriverD' 'CameraTrigger'};
         
 fs = 12.5e3;
