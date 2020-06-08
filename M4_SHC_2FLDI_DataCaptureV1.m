@@ -1,5 +1,5 @@
 %Teledyne Wavesurfer 510 M4 2pFLDI V1
-%edited for HCF data capture by Jack Cobourn 20200319 based on original code by Andrew Ceruzi
+%edited for SHC data capture by Jack Cobourn 20200602 based on original code by Andrew Ceruzi
 
 %% RUN CONDITIONS
 clear ISOdate date
@@ -8,30 +8,30 @@ date = date(); %Comment out for testing on a different day
 ISOdate = yyyymmdd(datetime(date));
 
 %run numbers
-DailyRunNum = 1;
-CampainRunNum = 1;
+DailyRunNum = 2;
+CampainRunNum = 3;
 PositionRunNumber = 1;
 
 %position
 tunnel_section = 1; %section of tunnel FLDI is probing
  z_dist = 0;  % position of tunnel test section centerline relative to FLDI focus (cm)
 
-xoutside = [7+54/64 8+3/64];
-youtside = [5+0/64 4+60/64];
+xoutside = [7+5/64 7+1/64];
+youtside = [5+0/64 5+0/64];
 
-xinside = 10-36.3;
-yinside = 10+8.5/64;
+xinside = 10-35.5/64;
+yinside = 10+9.5/64;
 
-temp_outside = 82;
-temp_inside = 73;
+temp_outside = 85;
+temp_inside = 75.5;
 
 %save Location
 folderstring=sprintf('F:\\FLDI_SHC_202006\\Data\\%d',ISOdate);
 savestring=sprintf('M4_2ptFLDI_SHC_CRun_%u_DRun_%u',CampainRunNum,DailyRunNum);
 
 %FLDI Config
-dx = [154.555868716406,196.400845854702,537.399782104387,579.562214091555];
-dy = [543.057846345564,542.592288813201,542.793003681600,542.748027776671];
+dx = [139,181.131648475679,523.098303904363,565.702722642885];
+dy = [253.619894165688,253.151101998642,253.323639340865,252.984554185767];
 dx1a = 0.00738*(dx(2)-dx(1))/1000; %FLDI beam separation
 dy1a = 0.00738*(dy(2)-dy(1))/1000;
 dx1b =  0.00738*(dx(4)-dx(3))/1000;
@@ -52,8 +52,8 @@ bitRes = 8;
 num_diaphrams = 1;  % number of diaphrams in ludweig tube
 expected_burst_pressure = '~17Psia'; % tunnel high pressure in Psia
 
-model = 'HCF'; %The model inserted in the tunnel during the run
-notes = {'chA is ch2, is upstream beam and downstream transducer';'set Both Chanels to 1MOhms'};
+model = 'SHC'; %The model inserted in the tunnel during the run
+notes = {'chA is ch2, is upstream beam and downstream transducer';'set Both Chanels to 1MOhms';'signals are now in phase'};
 
 
 %% Connect Teledyne Ocilloscope
@@ -230,7 +230,7 @@ end
 savefig(fig3,[savestring '.fig']);
 saveas(fig3,savestring,'jpeg');
 clear fig3
-save([folderstring '\' savestring '.mat'],'-v7.3','-append');
+save([folderstring '\' savestring '.mat'],'-v7.3');
 fid = fopen([folderstring '\' savestring '.txt'],'a');
 fprintf(fid,'Uc = %.4f',Uc);
 fclose(fid);
