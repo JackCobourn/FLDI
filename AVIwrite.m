@@ -1,6 +1,7 @@
-function AVIwrite(filename,ImageData)
+function AVIwrite(filename,ImageData,Framerate)
 
-v = VideoWriter([filename,'.AVI'],'Grayscale AVI');
+v = VideoWriter([filename,'.avi'],'Grayscale AVI');
+v.FrameRate=Framerate;
 open(v)
 writeVideo(v,ImageData)
 close(v)
