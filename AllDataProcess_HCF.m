@@ -1,8 +1,9 @@
 %% Find Matfiles
 close all
 
-cd('J:\FLDI_HCF_Working_202004\Data')
+cd('G:\FLDI_HCF_Working_202004\Data')
 Matfiles = dir('**/*.mat')';
+Matfiles(1)=[];
 %cd('C:\Users\jcobourn\Documents\GitHub\Focused_Laser_Dif_interf') %work
 %cd('C:\Users\Jack\Documents\GitHub\Focused_Laser_Dif_interf') %laptop
 %cd('D:\Jack\Documents\Focused_Laser_Dif_interf') %homepc
@@ -52,7 +53,13 @@ for ii = 1:length(M)
         CHA_TRIM{ii,1} = CHA_TRIM{ii,1}.*1000; %convert the teleydyne scope results to Volts
         CHB_TRIM{ii,1} = CHB_TRIM{ii,1}.*1000; %note offset doesn't matter due to mean subtracted pwelch
     end
-     
+     CHA_NTRIM{ii,1} = M(ii).Matfiles.chA_noise(fix((FS(ii).*PressureData(ii).time_start)):fix((FS(ii).*PressureData(ii).time_end)-1),1); 
+    %CHA{ii}(fix((FS(ii).*start)):fix((FS(ii).*stop)-1));
+    CHB_NTRIM{ii,1} = M(ii).Matfiles.chB_noise(fix((FS(ii).*PressureData(ii).time_start)):fix((FS(ii).*PressureData(ii).time_end)-1),1);
+    if BIT(ii) == 8
+        CHA_NTRIM{ii,1} = CHA_NTRIM{ii,1}.*1000; %convert the teleydyne scope results to Volts
+        CHB_NTRIM{ii,1} = CHB_NTRIM{ii,1}.*1000; %note offset doesn't matter due to mean subtracted pwelch
+    end
 end
 
 %% Calculate Re
@@ -80,22 +87,16 @@ lengthfreqVec = ceil(Fmax./deltaf)+1;
 %PSDa
 for ii = 1:length(M)
     ii   
-    if BIT(ii) == 15
         [PSDa{ii,1}, f{ii,1}] = pwelch(CHA_TRIM{ii,1}-mean(CHA_TRIM{ii,1}),...
             hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
-        [PSDb{ii,1}, f{ii,1}] = pwelch(CHB_TRIM{ii,1}-mean(CHB_TRIM{ii,1}),...
+        [PSDb{ii,1}, ~] = pwelch(CHB_TRIM{ii,1}-mean(CHB_TRIM{ii,1}),...
             hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
-        [MSC{ii,1}, f2{ii,1}] = mscohere(CHA_TRIM{ii,1},...
-            CHB_TRIM{ii,1},hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
-    elseif BIT(ii) == 8
-        [PSDa{ii,1}, f{ii,1}] = pwelch(CHA_TRIM{ii,1}-mean(CHA_TRIM{ii,1}),...
+%         [MSC{ii,1}, f2{ii,1}] = mscohere(CHA_TRIM{ii,1},...
+%             CHB_TRIM{ii,1},hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
+        [PSDna{ii,1}, ~] =  pwelch(CHA_NTRIM{ii,1}-mean(CHA_NTRIM{ii,1}),...
             hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
-        [PSDb{ii,1}, f{ii,1}] = pwelch(CHB_TRIM{ii,1}-mean(CHB_TRIM{ii,1}),...
+        [PSDnb{ii,1}, ~] =  pwelch(CHB_NTRIM{ii,1}-mean(CHB_NTRIM{ii,1}),...
             hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
-        [MSC{ii,1}, f2{ii,1}] = mscohere(CHA_TRIM{ii,1},...
-            CHB_TRIM{ii,1},hann(pow2(13)),0.75*pow2(13), pow2(13),fix(FS(ii,1)));
-
-    end
 end
 
 %% Create IMageSc waterfall plot
@@ -218,6 +219,126 @@ ax5 = axes('OuterPosition',[xycFigNorm(4,:) axsize],'Color','none');
     xlabel('f [Hz]')
     ylabel('Power')
     title({'x~6.02 in';'Mean of Channel A & B FFT'})
+
+%% Grab seperated figs
+figfree = figure();
+loglog(f{1,1}, mean([PSDa{1,1}';PSDb{1,1}']),'k-')
+hold on
+loglog(f{1,1}, mean([PSDna{1,1}';PSDnb{1,1}']),'k:')
+    legend('Mean of Channel A & B FFT','Mean of Noise on Channel A & B');
+    grid on
+    xlabel('Frequency [Hz]')
+    xlim([-inf,1e6])
+    ylabel('PSD [mV^2]')
+    
+fig25 = figure();
+loglog(f{2,1}, mean([PSDa{2,1}';PSDb{2,1}']),'-','Color',[0 0 0])
+hold on
+loglog(f{3,1}, mean([PSDa{3,1}';PSDb{3,1}']),'-')
+loglog(f{4,1}, mean([PSDa{4,1}';PSDb{4,1}']),'-')
+loglog(f{5,1}, mean([PSDa{5,1}';PSDb{5,1}']),'-')
+loglog(f{6,1}, mean([PSDa{6,1}';PSDb{6,1}']),'-')
+loglog(f{1,1}, mean([PSDna{2,1}';PSDnb{2,1}';PSDna{3,1}';PSDnb{3,1}';PSDna{4,1}';PSDnb{4,1}';PSDna{5,1}';PSDnb{5,1}';...
+    PSDna{6,1}';PSDnb{6,1}']),'k:')
+l = legend('0.4','2.9','0.8','0.4','1.6','Noise');
+l.Title.String='Distance above Model [mm]';
+    grid on
+    xlabel('Frequency [Hz]')
+    xlim([-inf,1e6])
+    ylabel('PSD [mV^2]')
+    
+fig485 = figure();
+loglog(f{7,1}, mean([PSDa{7,1}';PSDb{7,1}']),'-')
+hold on
+loglog(f{8,1}, mean([PSDa{8,1}';PSDb{8,1}']),'-')
+loglog(f{9,1}, mean([PSDa{9,1}';PSDb{9,1}']),'-')
+loglog(f{10,1}, mean([PSDa{10,1}';PSDb{10,1}']),'-')
+loglog(f{1,1}, mean([PSDna{7,1}';PSDnb{7,1}';PSDna{8,1}';PSDnb{8,1}';PSDna{9,1}';PSDnb{9,1}';...
+    PSDna{10,1}';PSDnb{10,1}']),'k:')
+l = legend('2.3','4.0','6.5','9.4','Noise');
+l.Title.String='Distance above Model [mm]';
+    grid on
+    xlabel('Frequency [Hz]')
+    xlim([-inf,1e6])
+    ylabel('PSD [mV^2]')
+
+fig60 = figure();
+loglog(f{11,1}, mean([PSDa{11,1}';PSDb{11,1}']),'-')
+hold on
+loglog(f{12,1}, mean([PSDa{12,1}';PSDb{12,1}']),'-')
+loglog(f{1,1}, mean([PSDna{12,1}';PSDnb{12,1}';PSDna{12,1}';PSDnb{12,1}']),'k:')
+l = legend('2.4','1.2','Noise');
+l.Title.String='Distance above Model [mm]';
+    grid on
+    xlabel('Frequency [Hz]')
+    xlim([-inf,5e6])
+    ylabel('PSD [mV^2]')
+    
+%% Tiled Layout
+figtile = figure();
+Tiles = tiledlayout(figtile,4,1,'TileSpacing','compact','Padding','compact');
+ylabel(Tiles,'PSD [mV^2]','FontSize',16)
+xlabel(Tiles,'Frequency [Hz]','FontSize',16)
+
+Ta1 = nexttile;
+loglog(f{1,1}, mean([PSDa{1,1}';PSDb{1,1}']),'k-')
+hold on
+loglog(f{1,1}, mean([PSDna{1,1}';PSDnb{1,1}']),'k:')
+l1 = legend(sprintf('Average\nof 2-Point\nFLDI'),'Noise');
+l1.Title.String='Freestream';
+l1.Title.FontSize=16;
+l1.FontSize=14;
+l1.Location='bestoutside';
+grid on
+
+Ta2 = nexttile;
+loglog(f{2,1}, mean([PSDa{2,1}';PSDb{2,1}']),'-','Color',[0 0 0])
+hold on
+loglog(f{3,1}, mean([PSDa{3,1}';PSDb{3,1}']),'-')
+loglog(f{4,1}, mean([PSDa{4,1}';PSDb{4,1}']),'-')
+loglog(f{5,1}, mean([PSDa{5,1}';PSDb{5,1}']),'-')
+loglog(f{6,1}, mean([PSDa{6,1}';PSDb{6,1}']),'-')
+loglog(f{1,1}, mean([PSDna{2,1}';PSDnb{2,1}';PSDna{3,1}';PSDnb{3,1}';PSDna{4,1}';PSDnb{4,1}';PSDna{5,1}';PSDnb{5,1}';...
+    PSDna{6,1}';PSDnb{6,1}']),'k:')
+l2 = legend('0.4','2.9','0.8','0.4','1.6','Noise');
+l2.Title.String=sprintf('X = 2.50 [in]\nY = [mm]');
+l2.Title.FontSize=16;
+l2.FontSize=14;
+l2.Location='bestoutside';
+grid on
+
+Ta3 = nexttile;
+loglog(f{7,1}, mean([PSDa{7,1}';PSDb{7,1}']),'-')
+hold on
+loglog(f{8,1}, mean([PSDa{8,1}';PSDb{8,1}']),'-')
+loglog(f{9,1}, mean([PSDa{9,1}';PSDb{9,1}']),'-')
+loglog(f{10,1}, mean([PSDa{10,1}';PSDb{10,1}']),'-')
+loglog(f{1,1}, mean([PSDna{7,1}';PSDnb{7,1}';PSDna{8,1}';PSDnb{8,1}';PSDna{9,1}';PSDnb{9,1}';...
+    PSDna{10,1}';PSDnb{10,1}']),'k:')
+l3 = legend('2.3','4.0','6.5','9.4','Noise');
+l3.Title.String=sprintf('X = 4.85 [in]\nY = [mm]');
+l3.Title.FontSize=16;
+l3.FontSize=14;
+l3.Location='bestoutside';
+grid on
+
+Ta4 = nexttile;
+loglog(f{11,1}, mean([PSDa{11,1}';PSDb{11,1}']),'-')
+hold on
+loglog(f{12,1}, mean([PSDa{12,1}';PSDb{12,1}']),'-')
+loglog(f{1,1}, mean([PSDna{12,1}';PSDnb{12,1}';PSDna{12,1}';PSDnb{12,1}']),'k:')
+l4 = legend('2.4','1.2','Noise');
+l4.Title.String=sprintf('X = 6.02 [in]\nY = [mm]');
+l4.Title.FontSize=16;
+l4.FontSize=14;
+l4.Location='bestoutside';
+grid on
+
+linkaxes([Ta1,Ta2,Ta3,Ta4])
+xlim([3e3,5e6])
+ylim([10^(-8.5),10^(-3.5)])
+print('G:\My Drive\FLDI_HCF_Working_202004\Results\ResultsTile2','-dsvg')
+
 
 
 %% Create Waterfall Plot

@@ -1,8 +1,9 @@
 %% Find Matfiles
 close all
-cd('C:\Users\jack\Documents\FLDI FastWrite')
+%cd('C:\Users\jack\Documents\FLDI FastWrite')
 %cd('L:\FLDI_Sensitivity_study\Data');
-Matfiles = dir('**/*.mat')';
+cd('J:\FLDI_Sensitivity_study_202005\Data');
+Matfiles = dir('**\2020052*\*.mat')';
 %cd('C:\Users\jcobourn\Documents\GitHub\Focused_Laser_Dif_interf') %work
 %cd('C:\Users\Jack\Documents\GitHub\Focused_Laser_Dif_interf') %laptop
 %cd('D:\Jack\Documents\Focused_Laser_Dif_interf') %homepc
@@ -26,7 +27,7 @@ for ii = 1:length(M)
     FS(ii,1) = M(ii).Matfiles.Fs;
     BIT(ii,1) = M(ii).Matfiles.bitRes;
         
-    CHA_TRI M{ii,1} = M(ii).Matfiles.chA_run(1:end,1); 
+    CHA_TRIM{ii,1} = M(ii).Matfiles.chA_run(1:end,1); 
     %CHA{ii}(fix((FS(ii).*start)):fix((FS(ii).*stop)-1));
     CHB_TRIM{ii,1} = M(ii).Matfiles.chB_run(1:end,1);
     if BIT(ii) == 8
@@ -75,25 +76,27 @@ end
 Colors = cell2mat(PSDedit);
 %Colors = cell2mat(PSDa')';
 fig3 = figure(3);
-imagesc('XData',f{1,1},'CData',log10(Colors(Index,:)));
+imagesc('XData',f{1,1}/10e2,'CData',log10(Colors(Index,:)));
+xlabel('Frequency [kHz]')
+xlim([0,2e2])
 ax3 = fig3.Children;
 grid on
 
 %set colormap
 colormap jet
  cb3 = colorbar();
- %caxis([-8,-4.5])
+ caxis([-8,-4.5])
  tickvals = cb3.Ticks;
  for ii = 1:length(tickvals)
      tickname{ii} = sprintf('10^{%.1f}',tickvals(ii));
  end
  cb3.TickLabels = tickname;
-cb3.Label.String = 'Power/Power';
+cb3.Label.String = 'PSD [mV^2]';
 fig3c = fig3.Children; Ax3 = fig3c(2);
 
 %set alphamap
 
-%set y
+%set y Full
 ylim([0.5,length(M)+0.5])
 ylabel('Run Number')
 Ax3.Layer = 'top';
@@ -104,9 +107,20 @@ Ax3.YAxis.TickDirection = 'out';
  end
 Ax3.YTickLabel = yticklab(Index);
 
+%set Y Pretty
+ylim([0.5,length(M)+0.5])
+ylabel('Z-Z_0 [in]')
+Ax3.Layer = 'top';
+Ax3.YTickMode = 'manual'; Ax3.YTickLabelMode = 'manual'; Ax3.YTick = 1:2:length(M);
+Ax3.YAxis.TickDirection = 'out';
+ for ii = 1:length(M)
+     yticklab(ii) = {sprintf('%.2f',M(ii).Matfiles.z_pos-12)};
+ end
+Ax3.YTickLabel = yticklab(Index(1:2:length(M)));
+
 %set x
-xlim([0,2e5])
-xlabel('Frequency [Hz]')
+% xlim([0,2e5])
+% xlabel('Frequency [Hz]')
 Ax3.XAxis.TickDirection = 'out'; Ax3.XAxis.TickLength = [0.005,0.01];
 
 %% Create Waterfall Plot
