@@ -1,8 +1,8 @@
 function [VisaInterface, Wavesurfer10] = OscopeVisaConnect(~)
 instrreset
 clear VisaInterface Wavesurfer10 Waveform Wave
-VisaInterface = visa('ni','TCPIP0::192.168.137.2::INSTR');
-Wavesurfer10 = icdevice('D:\Jack\Documents\GitHub\Focused_Laser_Dif_interf\Oscilloscope\lecroy_WaveSurvfer10_VISA.mdd', VisaInterface);
+VisaInterface = visa('ni','TCPIP0::192.168.0.2::INSTR');
+Wavesurfer10 = icdevice('C:\Users\Jack\Documents\GitHub\Focused_Laser_Dif_interf\Oscilloscope\lecroy_WaveSurvfer10_VISA.mdd', VisaInterface);
 %Wavesurfer10 = icdevice('lecroy_8600a.mdd', VisaInterface);
 
 connect(Wavesurfer10)

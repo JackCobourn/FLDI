@@ -1,5 +1,5 @@
 %Teledyne Wavesurfer 510 M4 2pFLDI V1
-%edited for HCF data capture by Jack Cobourn 20200319 based on original code by Andrew Ceruzi
+%edited for SHC data capture by Jack Cobourn 20200602 based on original code by Andrew Ceruzi
 
 %% RUN CONDITIONS
 clear ISOdate date
@@ -8,25 +8,30 @@ date = date(); %Comment out for testing on a different day
 ISOdate = yyyymmdd(datetime(date));
 
 %run numbers
-DailyRunNum = 1;
-CampainRunNum = 14;
+DailyRunNum = 2;
+CampainRunNum = 3;
 PositionRunNumber = 1;
 
 %position
 tunnel_section = 1; %section of tunnel FLDI is probing
-% x_dist = 25.4*(6+6/32);  % streamwise distance model mount to forward laser position (+-2mm)
-% rail_pos = 25.4*9.5; % position of rail measured on the stands. should be laser position from back window.
-% y_dist = (10+59/64)*25.4;  % vertical distance from tunnel floor to laser points in inch (+-2mm)
  z_dist = 0;  % position of tunnel test section centerline relative to FLDI focus (cm)
 
-xinside = NaN;
-xoutside = [6+4.5/64 6+5/64];
-yinside = NaN;
-youtside = [4+44/64 4+44/64];
+xoutside = [7+5/64 7+1/64];
+youtside = [5+0/64 5+0/64];
+
+xinside = 10-35.5/64;
+yinside = 10+9.5/64;
+
+temp_outside = 85;
+temp_inside = 75.5;
+
+%save Location
+folderstring=sprintf('F:\\FLDI_SHC_202006\\Data\\%d',ISOdate);
+savestring=sprintf('M4_2ptFLDI_SHC_CRun_%u_DRun_%u',CampainRunNum,DailyRunNum);
 
 %FLDI Config
-dx = [453 490 870 908];
-dy = [350 350 162 162];
+dx = [139,181.131648475679,523.098303904363,565.702722642885];
+dy = [253.619894165688,253.151101998642,253.323639340865,252.984554185767];
 dx1a = 0.00738*(dx(2)-dx(1))/1000; %FLDI beam separation
 dy1a = 0.00738*(dy(2)-dy(1))/1000;
 dx1b =  0.00738*(dx(4)-dx(3))/1000;
@@ -47,12 +52,12 @@ bitRes = 8;
 num_diaphrams = 1;  % number of diaphrams in ludweig tube
 expected_burst_pressure = '~17Psia'; % tunnel high pressure in Psia
 
-model = 'HCF'; %The model inserted in the tunnel during the run
-notes = {'chA is ch2, is upstream beam and downstream transducer';'set Both Chanels to 1MOhms'};
+model = 'SHC'; %The model inserted in the tunnel during the run
+notes = {'chA is ch2, is upstream beam and downstream transducer';'set Both Chanels to 1MOhms';'signals are now in phase'};
 
 
 %% Connect Teledyne Ocilloscope
-cd('D:\Jack\Documents\GitHub\Focused_Laser_Dif_interf')
+cd('C:\Users\Jack\Documents\GitHub\Focused_Laser_Dif_interf')
 cd('.\oscilloscope')
 [VisaInterface, Wavesurfer10] = OscopeVisaConnect(); %get interface and device
 VSA = VisaInterface; %simplify code with shorthands
@@ -91,7 +96,7 @@ numSamples = eval(query(VSA,'MEMORY_SIZE?')); %%% Add to driver properly. also y
 Fs = numSamples./recordtime; %Hz
 
 %% PAUSE FOR USER INPUT
-disp('Paused: Please press any key to collect noise data');
+disp('Paused: Please press any key to collect noise data: Turn off vacs');
 pause;
 
 %% CAPTURE NOISE DATA
@@ -103,11 +108,6 @@ pause;
     %Note channel A is bigger range.
     [chA_noise, ~, chA_noise_info] = invoke(WVE,'readwaveform','C2',true); %grab cha, with the time, and scled to doubles
     [chB_noise, ~, chB_noise_info] = invoke(WVE,'readwaveform','C3',true); %no need to grab time again
-    
-    
-%% PAUSE FOR USER INPUT
-disp('Paused: Please press any key to set up for run.');
-pause;
 
 %% Prepare to CAPTURE RUN DATA
  set(ACQ, 'Control', 'single'); %set to single with matlab driver
@@ -125,10 +125,10 @@ pause;
 
 %% Plot Signal
 disp('Plotting Signal')
-
+skipplot = round(linspace(1,length(timeMs),1000));
 figure(1)
 clf
-plot(timeMs,chA_run,timeMs,chB_run,timeMs, chA_noise, 'k',timeMs, chB_noise, 'k:')
+plot(timeMs(skipplot),chA_run(skipplot),'r',timeMs(skipplot),chB_run(skipplot),'b',timeMs(skipplot), chA_noise(skipplot), 'k',timeMs(skipplot), chB_noise(skipplot), 'k:')
 title('Channel A & B run Signal and flow-off Noise');
 xlabel('Time (ms)');
 ylabel('Voltage (mV)');
@@ -172,13 +172,13 @@ chB_run_trim = (chB_run(fix((Fs*start)):fix((Fs*stop))-1));
             hann(pow2(13)),0.75*pow2(13), pow2(13),fix(Fs));
 fig3 = figure(3)
 clf
-loglog(f,PSDa,'linewidth',2)
+loglog(f,PSDa,'r','linewidth',2)
 hold on;
-loglog(f,PSDb,'linewidth',2)
+loglog(f,PSDb,'b','linewidth',2)
 loglog(fn,PSDna,'k')
 loglog(fn,PSDnb,'k:')
 
-title('Channel A & B spectra')
+title('Channel A & B spectra, with flow off noise')
 ylabel('PSD [mV^2/Hz]')
 xlabel('Frequency [Hz]')
 xlim([0 Fs/2])
@@ -187,7 +187,7 @@ legend('Steady Flow: A','Steady Flow: B','Flow Off')
 hold off;
 
 %% compute cross correlation
-[cross_cor,lag] = xcorr(chA_run_trim-mean(chA_run_trim),-(chB_run_trim-mean(chB_run_trim)), 'coeff');
+[cross_cor,lag] = xcorr(chA_run_trim-mean(chA_run_trim),(chB_run_trim-mean(chB_run_trim)), 'coeff');
 %find max of xcorr and index
 [cc,I] = max(cross_cor);
 %check if xcorr peak is high enough?
@@ -217,18 +217,15 @@ disconnect(Wavesurfer10)
 clear VisaInterface Wavesurfer10 VSA SCP ACQ TRG WVE
 %% SAVE
 disp('Saving data...')
-folderstring=sprintf('F:\\FLDI_HCF\\Data\\%d',ISOdate);
-savestring=sprintf('M4_2ptFLDI_HCF_CRun_%u_DRun_%u',CampainRunNum,DailyRunNum);
 if ~isfolder(folderstring)
     mkdir(folderstring);
 end
 cd(folderstring)
-if isfile([savestring '.fig'])
-    error('FileExists')
-elseif isfile([savestring '.jpg'])
-    error('FileExists')
-elseif isfile([folderstring '\' savestring '.mat'])
-    error('FileExists')
+if isfile([savestring '.fig']) || isfile([savestring '.jpg']) || isfile([folderstring '\' savestring '.mat'])
+    error('File Exists: cannot overwrite')
+end
+if ~exist('fig3','var')
+    fig3 = figure(3);
 end
 savefig(fig3,[savestring '.fig']);
 saveas(fig3,savestring,'jpeg');
