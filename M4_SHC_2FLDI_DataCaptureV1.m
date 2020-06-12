@@ -6,32 +6,35 @@ clear ISOdate date
 %date
 date = date(); %Comment out for testing on a different day
 ISOdate = yyyymmdd(datetime(date));
+Time = string(datetime('now','Format','HH:mm:ss.SSS'));
 
 %run numbers
-DailyRunNum = 2;
-CampainRunNum = 3;
+DailyRunNum = 1;
+CampainRunNum = 6;
 PositionRunNumber = 1;
 
 %position
 tunnel_section = 1; %section of tunnel FLDI is probing
  z_dist = 0;  % position of tunnel test section centerline relative to FLDI focus (cm)
 
-xoutside = [7+5/64 7+1/64];
-youtside = [5+0/64 5+0/64];
+xoutside = [6+23/64 6+24/64];
+youtside = [5+1/64 5+0/64];
 
-xinside = 10-35.5/64;
-yinside = 10+9.5/64;
+xinside = 10-(4+10.5/64);
+yinside = 10+8/64;
 
-temp_outside = 85;
-temp_inside = 75.5;
+ModelLength = 13.706;
+
+temp_outside = 83;
+temp_inside = 74;
 
 %save Location
 folderstring=sprintf('F:\\FLDI_SHC_202006\\Data\\%d',ISOdate);
 savestring=sprintf('M4_2ptFLDI_SHC_CRun_%u_DRun_%u',CampainRunNum,DailyRunNum);
 
 %FLDI Config
-dx = [139,181.131648475679,523.098303904363,565.702722642885];
-dy = [253.619894165688,253.151101998642,253.323639340865,252.984554185767];
+dx = [302.181758950971,345.779031984523,685.215077091210,728.100533867774];
+dy = [263.889476461015,263.061734857600,262.826040078470,262.494168121350];
 dx1a = 0.00738*(dx(2)-dx(1))/1000; %FLDI beam separation
 dy1a = 0.00738*(dy(2)-dy(1))/1000;
 dx1b =  0.00738*(dx(4)-dx(3))/1000;
