@@ -9,32 +9,33 @@ ISOdate = yyyymmdd(datetime(date));
 Time = string(datetime('now','Format','HH:mm:ss.SSS'));
 
 %run numbers
-DailyRunNum = 1;
-CampainRunNum = 6;
+DailyRunNum = 2;
+CampainRunNum = 16;
 PositionRunNumber = 1;
 
 %position
 tunnel_section = 1; %section of tunnel FLDI is probing
  z_dist = 0;  % position of tunnel test section centerline relative to FLDI focus (cm)
 
-xoutside = [6+23/64 6+24/64];
-youtside = [5+1/64 5+0/64];
+xoutside = [6+28/64 6+27.5/64];
+youtside = [5+12.5/64 5+9.5/64];
 
-xinside = 10-(4+10.5/64);
-yinside = 10+8/64;
+xinside = 9-(13.3/64);
+yinside = 9+61.5/64;
 
-ModelLength = 13.706;
+ModelLength = 13.607;
 
-temp_outside = 83;
-temp_inside = 74;
+temp_outside = 87;
+temp_inside = 75.5;
+
 
 %save Location
 folderstring=sprintf('F:\\FLDI_SHC_202006\\Data\\%d',ISOdate);
 savestring=sprintf('M4_2ptFLDI_SHC_CRun_%u_DRun_%u',CampainRunNum,DailyRunNum);
 
 %FLDI Config
-dx = [302.181758950971,345.779031984523,685.215077091210,728.100533867774];
-dy = [263.889476461015,263.061734857600,262.826040078470,262.494168121350];
+dx = [71.297318179814870,1.133931296175612e+02,4.546565627704676e+02,4.980639204804637e+02];
+dy = [4.754284636838281e+02,4.749034422098900e+02,4.739383466692881e+02,4.733565783353063e+02];
 dx1a = 0.00738*(dx(2)-dx(1))/1000; %FLDI beam separation
 dy1a = 0.00738*(dy(2)-dy(1))/1000;
 dx1b =  0.00738*(dx(4)-dx(3))/1000;
@@ -153,7 +154,7 @@ set(ACQ, 'Control', 'single'); %set to single with matlab driver
 
 %Note: this should only be run on the steady-state part of the run
 %Another note: run this for the noise too so they can be compared
-
+temp_tunnel = input('input tunnel temp prerun in F');
 start = input('input start time'); %[s] trim window start
 stop=input('input stop time'); %[s] trim window stop
 %compute spectra for channel A
