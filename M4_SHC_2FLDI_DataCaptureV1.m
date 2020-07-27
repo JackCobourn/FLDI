@@ -183,7 +183,7 @@ loglog(fn,PSDna,'k')
 loglog(fn,PSDnb,'k:')
 
 title('Channel A & B spectra, with flow off noise')
-ylabel('PSD [mV^2/Hz]')
+ylabel('PSD [V^2/Hz]')
 xlabel('Frequency [Hz]')
 xlim([0 Fs/2])
 
