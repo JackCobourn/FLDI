@@ -361,7 +361,7 @@ Tb(ii).XMinorGrid='on';Tb(ii).YMinorGrid='on';Tb(ii).GridAlpha=.35;Tb(ii).MinorG
 
 end
 linkaxes([Tb(:)])
-print([ddrive filesep folderpath_r filesep 'SpcGram_V1']);
+print([ddrive filesep folderpath_r filesep 'SpcGram_V1'],'-dsvg');
 
 figtile = figure();
 Tiles = tiledlayout(figtile,3,4,'TileSpacing','Compact');
@@ -391,9 +391,9 @@ Tb(ii).XMinorGrid='on';Tb(ii).YMinorGrid='on';Tb(ii).GridAlpha=.35;Tb(ii).MinorG
 
 end
 linkaxes([Tb(:)])
-print([ddrive filesep folderpath_r filesep 'SpcGram_V2'])
+print([ddrive filesep folderpath_r filesep 'SpcGram_V2'],'-dsvg')
 
 %% Save everything but images.
 vars = whos;
-save('SCHResults',vars(~contains({vars.class},"matlab")).name,'-v7.3'); %Prevents saving of fig handles as they have 'matlab.' in their classname
+save('SHCResults',vars(~contains({vars.class},"matlab")).name,'-v7.3'); %Prevents saving of fig handles as they have 'matlab.' in their classname
 clear vars
