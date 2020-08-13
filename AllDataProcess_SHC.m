@@ -243,6 +243,9 @@ figtile = figure();
 Tiles = tiledlayout(figtile,3,4,'TileSpacing','Compact');
 ylabel(Tiles,'PSD [mV^2]','FontSize',16)
 xlabel(Tiles,'Frequency [Hz]','FontSize',16)
+IndexNo2 = IndexNo;
+IndexNo2(IndexNo>=5) = IndexNo(IndexNo>=5)+1; %Sch doesn't cut stuff that M does
+
 for ii = 1:length(IndexNo)
 Ta(ii) = nexttile;
 loglog(f{IndexNo(ii),1},PSDa{IndexNo(ii),1}','r',f{IndexNo(ii),1},PSDb{IndexNo(ii),1},'b');
@@ -251,16 +254,26 @@ loglog(f{IndexNo(ii),1},PSDNa{IndexNo(ii),1}','k',f{IndexNo(ii),1},PSDNb{IndexNo
 loglog(f{IndexNo(ii),1},PSDN2a{IndexNo(ii),1}','k-.',f{IndexNo(ii),1},PSDN2b{IndexNo(ii),1},'k:');
 Ta(ii).Title.String = sprintf('Local Re = %0.3G',M(IndexNo(ii)).Re);
 Ta(ii).Title.FontSize=16;
-if ii==4
-    l1 = legend('Channel A','Channel B','Ch A pre-run noise',...
-    'Ch B pre-run noise','Ch A post-run noise','Ch B post-run noise');
-	l1.Title.String=sprintf('Power Spectral\nDensity [mV^2]');
+% if ii==4
+%     l1 = legend('Channel A','Channel B','Ch A pre-run noise',...
+%     'Ch B pre-run noise','Ch A post-run noise','Ch B post-run noise');
+% 	l1.Title.String=sprintf('Power Spectral\nDensity [mV^2]');
+%     l1.Title.FontSize=16;
+%     l1.FontSize=14;
+%     l1.Location='northeastoutside';
+% end
+if any(IndexNo2(ii) == [2,3,9,11,12])
+    xline(SCH(IndexNo2(ii)).Festimate,'g')
+end
+
+grid on
+end
+l1 = legend(Ta(8),{'Channel A','Channel B','Ch A pre-run noise',...
+    'Ch B pre-run noise','Ch A post-run noise','Ch B post-run noise','y_{BL} / U_{edge}'});
+l1.Title.String=sprintf('Power Spectral\nDensity [mV^2]');
     l1.Title.FontSize=16;
     l1.FontSize=14;
     l1.Location='northeastoutside';
-end
-grid on
-end
 linkaxes([Ta(:)])
 % xlim([3e3,5e6])
 % ylim([10^(-8.5),10^(-3.5)])
