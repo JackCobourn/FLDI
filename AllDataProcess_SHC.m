@@ -80,7 +80,7 @@ T = T0.*Tratio;
 rho = P'./(R.*T);
 a = sqrt(gamma*R.*T);
 U0 = Mach.*a;
-mu = 0.00001458.*(T).^1.5./(T+110.4); %sutherlans law
+mu = ((1.458.*10^-6).*((T).^1.5))./(T+110.4); %sutherlans law
 Rex =  num2cell(rho.*U0./mu);
 [M.Rex] = deal(Rex{:});
 clear Mach gamma R Tratio Pratio P T rho a mu
@@ -182,7 +182,7 @@ end
 Colors = cell2mat(PSDa(IndexNo)')';
 %Colors = cell2mat(PSDa')';
 fig3 = figure(3);
-imagesc('XData',f{1,1},'CData',log10(Colors))
+imagesc('XData',f{1,1}.*10^-6,'CData',log10(Colors))
 ax3 = fig3.Children;
 grid on
 
@@ -197,12 +197,17 @@ colormap jet
  cb3.TickLabels = tickname;
 cb3.Label.String = 'PSD [mV^2/Hz]';
 fig3c = fig3.Children; Ax3 = fig3c(2);
+Ax3.FontSize = 15;
+cb3.Label.FontSize = 20;
+Ax3.YLabel.FontSize = 24;
+Ax3.XLabel.FontSize = 24;
+
 
 %set alphamap
 
 %set y
 ylim([0.5,length(IndexNo)+0.5])
-ylabel('Channel A Local Reynolds Number')
+ylabel('Channel A Local R_e')
 Ax3.Layer = 'top';
 Ax3.YTickMode = 'manual'; Ax3.YTickLabelMode = 'manual'; Ax3.YTick = 1:length(M);
 Ax3.YAxis.TickDirection = 'out';
@@ -212,8 +217,8 @@ Ax3.YAxis.TickDirection = 'out';
 Ax3.YTickLabel = yticklab;
 
 %set x
-xlim([0,2e6])
-xlabel('Frequency [Hz]')
+xlim([0,2])
+xlabel('Frequency [MHz]')
 Ax3.XAxis.TickDirection = 'out'; Ax3.XAxis.TickLength = [0.005,0.01];
 %Did all this with the XDATA command
 % tixspace = 5e4;
@@ -240,9 +245,9 @@ ax1.View = [0 0];
 
 %% Tiled Layout
 figtile = figure();
-Tiles = tiledlayout(figtile,3,4,'TileSpacing','Compact');
-ylabel(Tiles,'PSD [mV^2]','FontSize',16)
-xlabel(Tiles,'Frequency [Hz]','FontSize',16)
+Tiles = tiledlayout(figtile,1,1,'TileSpacing','Compact');
+ylabel(Tiles,'PSD [mV^2]','FontSize',20)
+xlabel(Tiles,'Frequency [Hz]','FontSize',20)
 IndexNo2 = IndexNo;
 IndexNo2(IndexNo>=5) = IndexNo(IndexNo>=5)+1; %Sch doesn't cut stuff that M does
 
@@ -253,7 +258,9 @@ hold on
 loglog(f{IndexNo(ii),1},PSDNa{IndexNo(ii),1}','k',f{IndexNo(ii),1},PSDNb{IndexNo(ii),1},'k--');
 loglog(f{IndexNo(ii),1},PSDN2a{IndexNo(ii),1}','k-.',f{IndexNo(ii),1},PSDN2b{IndexNo(ii),1},'k:');
 Ta(ii).Title.String = sprintf('Local Re = %0.3G',M(IndexNo(ii)).Re);
-Ta(ii).Title.FontSize=16;
+Ta(ii).Title.FontSize=18;
+Ta(ii).FontSize=14;
+
 % if ii==4
 %     l1 = legend('Channel A','Channel B','Ch A pre-run noise',...
 %     'Ch B pre-run noise','Ch A post-run noise','Ch B post-run noise');
@@ -263,12 +270,12 @@ Ta(ii).Title.FontSize=16;
 %     l1.Location='northeastoutside';
 % end
 if any(IndexNo2(ii) == [2,3,9,11,12])
-    xline(SCH(IndexNo2(ii)).Festimate,'g')
+    xline(SCH(IndexNo2(ii)).Festimate,'Color','green','LineWidth',1.8)
 end
 
 grid on
 end
-l1 = legend(Ta(8),{'Channel A','Channel B','Ch A pre-run noise',...
+l1 = legend(Ta(1),{'Channel A','Channel B','Ch A pre-run noise',...
     'Ch B pre-run noise','Ch A post-run noise','Ch B post-run noise','y_{BL} / U_{edge}'});
 l1.Title.String=sprintf('Power Spectral\nDensity [mV^2]');
     l1.Title.FontSize=16;
@@ -277,7 +284,7 @@ l1.Title.String=sprintf('Power Spectral\nDensity [mV^2]');
 linkaxes([Ta(:)])
 % xlim([3e3,5e6])
 % ylim([10^(-8.5),10^(-3.5)])
-print([ddrive filesep folderpath_r filesep 'Spectra_V1')
+%print([ddrive filesep folderpath_r filesep 'Spectra_V1')
 
 
 %% Print Voltages and Delta Ts
@@ -350,7 +357,7 @@ end
 
 figtile = figure();
 Tiles = tiledlayout(figtile,3,4,'TileSpacing','Compact');
-ylabel(Tiles,'Frequency [Hz]','FontSize',16)
+ylabel(Tiles,'Frequency [MHz]','FontSize',16)
 xlabel(Tiles,'Time [s]','FontSize',16)
 for ii = 1:length(IndexNo)
 Tb(ii) = nexttile;
@@ -377,32 +384,41 @@ linkaxes([Tb(:)])
 print([ddrive filesep folderpath_r filesep 'SpcGram_V1'],'-dsvg');
 
 figtile = figure();
-Tiles = tiledlayout(figtile,3,4,'TileSpacing','Compact');
-ylabel(Tiles,'Frequency [Hz]','FontSize',16)
-xlabel(Tiles,'Time [s]','FontSize',16)
+Tiles = tiledlayout(figtile,4,3,'TileSpacing','Compact','Padding','normal');
+ylabel(Tiles,'Frequency [MHz]','FontSize',20)
+xlabel(Tiles,'Time [s]','FontSize',20)
 for ii = 1:length(IndexNo)
 Tb(ii) = nexttile;
-imagesc('XData',tspc_Full{IndexNo(ii)},'YData',fspc_Full{IndexNo(ii)},'CData',mag2db(SPCa_Full{IndexNo(ii)}))
+imagesc('XData',tspc_Full{IndexNo(ii)},'YData',fspc_Full{IndexNo(ii)}./10^6,'CData',log10(SPCa_Full{IndexNo(ii)}))
+hold on
 colormap jet
-xline(PressureData(IndexNo(ii)).time_start,'r')
-xline(PressureData(IndexNo(ii)).time_end,'r')
+xline(PressureData(IndexNo(ii)).time_start,'Color','black','LineWidth',2.5)
+xline(PressureData(IndexNo(ii)).time_end,'Color','black','LineWidth',2.5)
 Tb(ii).Title.String = sprintf('Local Re = %0.3G',M(IndexNo(ii)).Re);
 Tb(ii).Title.FontSize=16;
-ylim([-inf,1e6])
+ylim([-inf,2.5])
+xlim([0.059526209677419,0.165372983870968])
+caxis([-15,-10])
+if any(ii == [3,6,9,12])
      cb(ii) = colorbar();
-     cb(ii).Label.String = 'PSD [dB/Hz]';
-     caxis([-300,0])
-%     l1 = legend('Channel A','Channel B','Ch A pre-run noise',...
-%     'Ch B pre-run noise','Ch A post-run noise','Ch B post-run noise');
-% 	l1.Title.String=sprintf('Power Spectral\nDensity [mV^2]');
-%     l1.Title.FontSize=16;
-%     l1.FontSize=14;
-%     l1.Location='northeastoutside';
- 
+     tickvals = cb(ii).Ticks;
+  for jj = 1:length(tickvals)
+      tickname{jj} = sprintf('10^{%.1f}',tickvals(jj));
+  end
+  cb(ii).TickLabels = tickname;
+ cb(ii).Label.String = 'PSD [mV^2/Hz]';
+ cb(ii).Label.FontSize = 16;
+end
 grid on
 Tb(ii).XMinorGrid='on';Tb(ii).YMinorGrid='on';Tb(ii).GridAlpha=.35;Tb(ii).MinorGridAlpha=.25;
-
+for ll=0.5:0.5:2.5
+    yline(ll)
 end
+for ll=0.06:0.02:0.16
+    xline(ll)
+end
+end
+save('SpcGram_V3.mat','figtile','-v7.3')
 linkaxes([Tb(:)])
 print([ddrive filesep folderpath_r filesep 'SpcGram_V2'],'-dsvg')
 

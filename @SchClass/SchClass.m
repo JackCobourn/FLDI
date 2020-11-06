@@ -82,7 +82,7 @@ classdef SchClass < handle
         obj.FidVideo=fopen(sprintf('%s.mraw',obj.Filename),'r');
         % Check if Files loaded
         if fid1<1 || obj.FidVideo<1 
-            disp([num2str(datestr(now)), ': MRAW-Files could not be found!']);
+            disp([num2str(datestr(now)), ': MRAW-Files could not be found!', sprintf('File = %s',obj.Filename)]);
             return;
         end
         % Read Header Information
@@ -158,6 +158,15 @@ classdef SchClass < handle
       end
       
       function A = getFrames(obj, numimgs)
+        bitOrder = 'n';
+        if obj.ColorBit ~= 16
+            switch obj.BitSide
+                case 'Lower'
+                    bitOrder = 'b';
+                case 'Higher'
+                    bitOrder = 'l';
+            end
+        end
           % Define Image Range
             if numimgs==0               % load all the images 
                 first_frame=1;
@@ -171,6 +180,9 @@ classdef SchClass < handle
                 frames=last_frame-first_frame+1;
             end
             
+        start = (first_frame-1)*obj.Pixels*obj.ColorBit/8;
+        fseek(obj.FidVideo,start,'bof');
+        
             % Color Image 3x12Bit
         if strcmp(obj.ColorType,'Color')
             color = 3;
@@ -178,102 +190,39 @@ classdef SchClass < handle
             color = 1;
         end
             
-        %Preallocate Images
+        %Preallocate Images and Store
         if color == 3
+            %prealocate
+            I=zeros(obj.Pixels.*frames,3,'uint16');
             A=zeros(obj.Height,obj.Width,3,frames,'uint16');
-            for ii=1:frames
-                A(:,:,:,ii) = obj.getFrame(obj,first_frame+ii-1);
-            end
+            N=[obj.Width obj.Height 1 frames];
+            %read all
+            pixelRGB = (fread(obj.FidVideo,obj.Pixels*color.*frames,['ubit' num2str(obj.ColorBit/color) '=>uint16'],bitOrder));
+            
+            %fill I with each color
+            I(:,1) = pixelRGB(1:3:end,:);
+            I(:,2) = pixelRGB(2:3:end,:);
+            I(:,3) = pixelRGB(3:3:end,:);
+            
+            A(:,:,:,:)=permute(reshape(I,N),[2 1 3 4]);  
+            
+            
         else
+            %prealocate
+            %code analyzer shows it doesn't use this preallocate I=zeros(obj.Pixels.*frames,1,'uint16');
             A=zeros(obj.Height,obj.Width,frames,'uint16');
-            for ii=1:frames
-                A(:,:,ii) = obj.getFrame(first_frame+ii-1);
-            end
+            N=[obj.Width obj.Height frames];
+            %read all
+            I = (fread(obj.FidVideo,obj.Pixels.*frames,['ubit' num2str(obj.ColorBit) '=>uint16'],bitOrder));
+            %reshape
+            A(:,:,:)=permute(reshape(I,N),[2 1 3]);  
+%             for ii=1:frames
+%                 A(:,:,ii) = obj.getFrame(first_frame+ii-1);
+%             end
         end
       end    
- %{     
-      function A = getFrames(obj, numimgs)
-            % Define Image Range
-            if numimgs==0               % load all the images 
-                first_frame=1;
-                frames=obj.TotalFrames;
-            elseif (length(numimgs)==1) % load a single image
-                first_frame=numimgs;
-                frames=1;
-            else                        % load a specified range of images
-                first_frame=numimgs(1,1);
-                last_frame=numimgs(1,2);
-                frames=last_frame-first_frame+1;
-            end
-        %handle Variasble endian
-             bitOrder = 'n';
-        if obj.ColorBit ~= 16
-            switch obj.BitSide
-                case 'Lower'
-                    bitOrder = 'b';
-                case 'Higher'
-                    bitOrder = 'l';
-            end
-        end
-        % Color Image 3x12Bit
-        if strcmp(obj.ColorType,'Color')
-            color = 3;
-        else
-            color = 1;
-        end
-            
-        %Preallocate Images
-        start = (first_frame-1)*obj.Pixels*obj.ColorBit/8;
-        fseek(obj.FidVideo,start,'bof');
-        
-        if color == 3
-            I=zeros(obj.Pixels,3,frames,'uint16');
-            N=[obj.Width obj.Height 3 frames];
-        else
-            I=zeros(obj.Pixels,frames,'uint16');
-            N=[obj.Width obj.Height frames];
-        end
-        
-        % Store Images to Mat
-        if color == 3
-            pixelRGB = (fread(obj.FidVideo,obj.Pixels*color,['ubit' num2str(obj.ColorBit/color) '=>uint16'],bitOrder));
-            I(:,1) = pixelRGB(1:3:end,:);
-            I(:,2) = pixelRGB(2:3:end,:);
-            I(:,3) = pixelRGB(3:3:end,:);
-            A(:,:,:)=permute(reshape(I,N),[2 1 3]);  
-        else
-            I = (fread(obj.FidVideo,obj.Pixels,['ubit' num2str(obj.ColorBit) '=>uint16'],bitOrder));
-            A(:,:)=permute(reshape(I,N),[2 1 3]);  
-        end    
-      end
+ 
       
-        I=zeros(Pixels,frames,'uint16');
-        for n=1:1:frames
-            I(:,n)=(fread(fid2,Pixels,'uint16'));
-        end
-        fclose(fid2);
-        N = [Width Height frames];
-        ImageData.Images.RawImages=permute(reshape(I,N),[2 1 3]);
-        ImageData.CameraSetup=CameraSetup;
-        
-        first_frame=n;
-       
-        % Load Images
-        
-        
-        % Store Images to Mat
-        if color == 3
-            pixelRGB = (fread(obj.FidVideo,obj.Pixels*color,['ubit' num2str(obj.ColorBit/color) '=>uint16'],bitOrder));
-            I(:,1) = pixelRGB(1:3:end,:);
-            I(:,2) = pixelRGB(2:3:end,:);
-            I(:,3) = pixelRGB(3:3:end,:);
-            A(:,:,:)=permute(reshape(I,N),[2 1 3]);  
-        else
-            I = (fread(obj.FidVideo,obj.Pixels,['ubit' num2str(obj.ColorBit) '=>uint16'],bitOrder));
-            A(:,:)=permute(reshape(I,N),[2 1 3]);  
-        end    
-end 
-%}     
       function obj = makeLut(obj, min_val, max_val, gamma)
         % create LUT and store in property
         lut=zeros(1,65536,'uint16');

@@ -1,6 +1,6 @@
 %Process large Block of Pressure Data
-ddrive = 'F:';
-folderpath = 'FLDI_SHC_202006\Pressure';
+ddrive = 'C:';
+folderpath = 'Horizon work\FLDI_SHC_202006\Pressure';
 cd([ddrive filesep folderpath])
 PressureFiles = dir('**/*_*')';
 

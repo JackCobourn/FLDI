@@ -72,7 +72,7 @@ T = 300*Tratio;
 rho = P./(R.*T);
 a = sqrt(gamma*R*T);
 U0 = Mach*a;
-mu = 0.00001458*(T)^1.5/(T+110.4); %sutherlans law
+mu = 1.458e-6*(T)^1.5/(T+110.4); %sutherlans law
 Rex =  num2cell(rho.*U0./mu);
 [M.Re] = deal(Rex{:});
 clear Mach gamma R Tratio Pratio P T rho a mu
@@ -107,41 +107,56 @@ end
 % end
 %PSDedit(:) = PSDa(:)(1:length(PSDa{1,1}))'; is there a way to do above in
 %1 line? could use cell2mat(PSDa) and then remap()
-Colors = 1e5*cell2mat(PSDa')';
+for ii = 1:length(M)
+    PSDave{ii,1} = mean([PSDa{ii,1},PSDb{ii,1}],2);
+end
+Proper_RunOrder = [1 2 5 4 3 6 7 8 9 10 12 11];%hardcoded
+Labels = [1, 4, 8.5, 11.5];
+Run_Group_Names = {'Freestream', 'Boundary layer', 'Seperation','Reattachment'};
+Colors = 1e5*cell2mat(PSDave')';
 %Colors = cell2mat(PSDa')';
 fig3 = figure(3);
-imagesc('XData',f{1,1},'CData',log10(Colors))
+%imagesc('XData',f{1,1}.*10^-6,'CData',log10(Colors(Proper_RunOrder,:)))
+imagesc('XData',f{1,1}.*10^-6,'CData',log10(Colors))
 ax3 = fig3.Children;
 grid on
 
 %set colormap
 colormap jet
  cb3 = colorbar();
- caxis([-3.5,-1])
+ caxis([-3.5,0])
  tickvals = cb3.Ticks;
  for ii = 1:length(tickvals)
-     tickname{ii} = sprintf('10^{%.1f}',tickvals(ii));
+     tickname{ii} = sprintf('10^{%.1f}',tickvals(ii)-5);
  end
  cb3.TickLabels = tickname;
-cb3.Label.String = 'Power*10^5/Power';
+cb3.Label.String = 'PSD [mV^2]';
 fig3c = fig3.Children; Ax3 = fig3c(2);
-
+Ax3.FontSize = 15;
+cb3.Label.FontSize = 20;
 %set alphamap
 
 %set y
 ylim([0.5,length(M)+0.5])
-ylabel('Run Number')
+title({})
+ylabel({'FLDI measurments, Grouped by Streamwise Location,';'Sorted by Increasing y-Normal Position'})
 Ax3.Layer = 'top';
-Ax3.YTickMode = 'manual'; Ax3.YTickLabelMode = 'manual'; Ax3.YTick = 1:length(M);
+Ax3.YLabel.FontSize = 24;
+Ax3.YTickMode = 'manual'; Ax3.YTickLabelMode = 'manual'; 
 Ax3.YAxis.TickDirection = 'out';
- for ii = 1:length(M)
-     yticklab(ii) = {sprintf('%u',M(ii).Matfiles.CampainRunNum)};
- end
-Ax3.YTickLabel = yticklab;
+Ax3.YAxis.TickLabel
+Ax3.YAxis.TickValues = Labels; Ax3.YAxis.TickLabelRotationMode = 'manual'; Ax3.YAxis.TickLabelRotation = 0;
+Ax3.YAxis.TickLabels = Run_Group_Names;
+% 
+%  for ii = 1:length(M)
+%      yticklab(ii) = {sprintf('%u',M(ii).Matfiles.CampainRunNum)};
+%  end
+% Ax3.YTickLabel = yticklab;
 
 %set x
-xlim([0,2e6])
-xlabel('Frequency [Hz]')
+xlim([0,2])
+xlabel('Frequency [MHz]')
+Ax3.XLabel.FontSize = 24;
 Ax3.XAxis.TickDirection = 'out'; Ax3.XAxis.TickLength = [0.005,0.01];
 %Did all this with the XDATA command
 % tixspace = 5e4;
