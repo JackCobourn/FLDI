@@ -245,9 +245,9 @@ ax1.View = [0 0];
 
 %% Tiled Layout
 figtile = figure();
-Tiles = tiledlayout(figtile,1,1,'TileSpacing','Compact');
-ylabel(Tiles,'PSD [mV^2]','FontSize',20)
-xlabel(Tiles,'Frequency [Hz]','FontSize',20)
+Tiles = tiledlayout(figtile,3,4,'TileSpacing','Compact');
+ylabel(Tiles,'PSD [mV^2]','FontSize',28)
+xlabel(Tiles,'Frequency [Hz]','FontSize',28)
 IndexNo2 = IndexNo;
 IndexNo2(IndexNo>=5) = IndexNo(IndexNo>=5)+1; %Sch doesn't cut stuff that M does
 
@@ -258,8 +258,10 @@ hold on
 loglog(f{IndexNo(ii),1},PSDNa{IndexNo(ii),1}','k',f{IndexNo(ii),1},PSDNb{IndexNo(ii),1},'k--');
 loglog(f{IndexNo(ii),1},PSDN2a{IndexNo(ii),1}','k-.',f{IndexNo(ii),1},PSDN2b{IndexNo(ii),1},'k:');
 Ta(ii).Title.String = sprintf('Local Re = %0.3G',M(IndexNo(ii)).Re);
-Ta(ii).Title.FontSize=18;
-Ta(ii).FontSize=14;
+Ta(ii).FontSize=18;
+Ta(ii).Title.FontSize=20;
+Ta(ii).XAxis.Label.FontSize=28;
+Ta(ii).YAxis.Label.FontSize=28;
 
 % if ii==4
 %     l1 = legend('Channel A','Channel B','Ch A pre-run noise',...
@@ -276,7 +278,7 @@ end
 grid on
 end
 l1 = legend(Ta(1),{'Channel A','Channel B','Ch A pre-run noise',...
-    'Ch B pre-run noise','Ch A post-run noise','Ch B post-run noise','y_{BL} / U_{edge}'});
+    'Ch B pre-run noise','Ch A post-run noise','Ch B post-run noise','U_{edge}/y_{BL}'});
 l1.Title.String=sprintf('Power Spectral\nDensity [mV^2]');
     l1.Title.FontSize=16;
     l1.FontSize=14;
@@ -356,7 +358,7 @@ for ii = 1:length(M)
 end
 
 figtile = figure();
-Tiles = tiledlayout(figtile,3,4,'TileSpacing','Compact');
+Tiles = tiledlayout(figtile,4,3,'TileSpacing','Compact');
 ylabel(Tiles,'Frequency [MHz]','FontSize',16)
 xlabel(Tiles,'Time [s]','FontSize',16)
 for ii = 1:length(IndexNo)
@@ -385,8 +387,8 @@ print([ddrive filesep folderpath_r filesep 'SpcGram_V1'],'-dsvg');
 
 figtile = figure();
 Tiles = tiledlayout(figtile,4,3,'TileSpacing','Compact','Padding','normal');
-ylabel(Tiles,'Frequency [MHz]','FontSize',20)
-xlabel(Tiles,'Time [s]','FontSize',20)
+ylabel(Tiles,'Frequency [MHz]','FontSize',28)
+xlabel(Tiles,'Time [s]','FontSize',28)
 for ii = 1:length(IndexNo)
 Tb(ii) = nexttile;
 imagesc('XData',tspc_Full{IndexNo(ii)},'YData',fspc_Full{IndexNo(ii)}./10^6,'CData',log10(SPCa_Full{IndexNo(ii)}))
@@ -395,7 +397,8 @@ colormap jet
 xline(PressureData(IndexNo(ii)).time_start,'Color','black','LineWidth',2.5)
 xline(PressureData(IndexNo(ii)).time_end,'Color','black','LineWidth',2.5)
 Tb(ii).Title.String = sprintf('Local Re = %0.3G',M(IndexNo(ii)).Re);
-Tb(ii).Title.FontSize=16;
+Tb(ii).FontSize=18;
+Tb(ii).Title.FontSize=20;
 ylim([-inf,2.5])
 xlim([0.059526209677419,0.165372983870968])
 caxis([-15,-10])
@@ -407,7 +410,7 @@ if any(ii == [3,6,9,12])
   end
   cb(ii).TickLabels = tickname;
  cb(ii).Label.String = 'PSD [mV^2/Hz]';
- cb(ii).Label.FontSize = 16;
+ cb(ii).Label.FontSize = 18;
 end
 grid on
 Tb(ii).XMinorGrid='on';Tb(ii).YMinorGrid='on';Tb(ii).GridAlpha=.35;Tb(ii).MinorGridAlpha=.25;
