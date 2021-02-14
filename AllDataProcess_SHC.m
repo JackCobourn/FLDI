@@ -128,6 +128,52 @@ Leg = legend([L1;L2;L3]','Channel A rms','Channel B rms','Channel A pre-run nois
 rmsfigax2.Position =rmsfigax.Position;
 Leg2 = legend([L4;L5(1);L6(1)]','A Channel Streamwise Locations','Freestream A/B','Outside BL A/B','Location','northeast'); Leg2.FontSize=16; Leg2.Title.String='By Position'; Leg2.Box='off';
 ylim(rmsfigax.YLim);
+
+%% Floating RMS Analysis
+for ii = 1:length(M)
+RMS_Float_A{ii,1} = std(reshape(CHA_TRIM{ii,1}(1:floor(length(CHA_TRIM{ii,1})./1000).*1000,1),1000,[])-mean(reshape(CHA_TRIM{ii,1}(1:floor(length(CHA_TRIM{ii,1})./1000).*1000,1),1000,[])));
+RMS_Float_B{ii,1} = std(reshape(CHB_TRIM{ii,1}(1:floor(length(CHB_TRIM{ii,1})./1000).*1000,1),1000,[])-mean(reshape(CHB_TRIM{ii,1}(1:floor(length(CHB_TRIM{ii,1})./1000).*1000,1),1000,[])));
+Intermittancy{ii,1} = 100*sum(RMS_Float_A{ii,1}>mean([RMS_Float_A{:,1},RMS_Float_B{:,1}],'all'))./length(RMS_Float_A{ii,1});
+end
+
+figtile = figure();
+Tiles = tiledlayout(figtile,3,4,'TileSpacing','Compact');
+ylabel(Tiles,'Mean Subtracted RMS [mV]','FontSize',28)
+xlabel(Tiles,'Time [s]','FontSize',28)
+
+for ii = 1:length(IndexNo)
+Ta(ii) = nexttile;
+plot((((1:1+length(RMS_Float_A{IndexNo(ii),1})-0.5).*(1000/FS(ii,1)))+PressureData(IndexNo(ii)).time_start),RMS_Float_A{IndexNo(ii),1},'r','LineWidth',1.0)
+hold on
+plot((((1:1+length(RMS_Float_B{IndexNo(ii),1})-0.5).*(1000/FS(ii,1)))+PressureData(IndexNo(ii)).time_start),RMS_Float_B{IndexNo(ii),1},'b','LineWidth',1.0)
+
+Ta(ii).Title.String = sprintf('Local Re = %0.3G',M(IndexNo(ii)).Re);
+Ta(ii).FontSize=18;
+Ta(ii).Title.FontSize=20;
+Ta(ii).XAxis.Label.FontSize=28;
+Ta(ii).YAxis.Label.FontSize=28;
+ylim([0,10])
+xlim([-inf,inf])
+grid on
+end
+
+% l1 = legend(Ta(1),{'Channel A','Channel B','Ch A pre-run noise',...
+%     'Ch B pre-run noise','Ch A post-run noise','Ch B post-run noise','U_{edge}/y_{BL}'});
+% l1.Title.String=sprintf('Power Spectral\nDensity [mV^2]');
+%     l1.Title.FontSize=16;
+%     l1.FontSize=14;
+%     l1.Location='northeastoutside';
+linkaxes([Ta(:)],'y')
+
+int = figure()
+plot([M(IndexNo(:)).Re],[Intermittancy{IndexNo(:),1}],'k*')
+ylabel('Percent above mean RMS','FontSize',18)
+xlabel('Local Re','FontSize',18)
+int.Children.FontSize=18
+grid on 
+grid minor
+ylim([-5,105])
+
 %% Spectral Analysis
 numPoints = arrayfun(@(x) length(x{:}),CHA_TRIM);
 Closestpow2 = pow2(floor(log2(numPoints./100)));
@@ -243,11 +289,24 @@ ax1.ZScale = 'log';
 %ax1.View = [37.5 30];
 ax1.View = [0 0];
 
-%% Tiled Layout
+%% Calc Velocity to include estimate in spectra plot.
+for ii = 1:length(M)
+M(ii).Uc = M(ii).Matfiles.Uc;
+end
+
+vel = figure()
+plot([M(:).Re],[M(:).Uc],'k*','LineWidth',1.8)
+ylabel('Velocity [m/s]','FontSize',18)
+xlabel('Local Re','FontSize',24)
+grid on
+grid minor
+vel.Children.FontSize = 18; 
+
+%% Tiled Layout of spectra
 figtile = figure();
-Tiles = tiledlayout(figtile,3,4,'TileSpacing','Compact');
-ylabel(Tiles,'PSD [mV^2]','FontSize',28)
-xlabel(Tiles,'Frequency [Hz]','FontSize',28)
+Tiles = tiledlayout(figtile,3,4,'TileSpacing','compact');
+ylabel(Tiles,'PSD [mV^2]','FontSize',24)
+xlabel(Tiles,'Frequency [Hz]','FontSize',24)
 IndexNo2 = IndexNo;
 IndexNo2(IndexNo>=5) = IndexNo(IndexNo>=5)+1; %Sch doesn't cut stuff that M does
 
@@ -258,25 +317,20 @@ hold on
 loglog(f{IndexNo(ii),1},PSDNa{IndexNo(ii),1}','k',f{IndexNo(ii),1},PSDNb{IndexNo(ii),1},'k--');
 loglog(f{IndexNo(ii),1},PSDN2a{IndexNo(ii),1}','k-.',f{IndexNo(ii),1},PSDN2b{IndexNo(ii),1},'k:');
 Ta(ii).Title.String = sprintf('Local Re = %0.3G',M(IndexNo(ii)).Re);
-Ta(ii).FontSize=18;
+Ta(ii).FontSize=16;
 Ta(ii).Title.FontSize=20;
-Ta(ii).XAxis.Label.FontSize=28;
-Ta(ii).YAxis.Label.FontSize=28;
-
-% if ii==4
-%     l1 = legend('Channel A','Channel B','Ch A pre-run noise',...
-%     'Ch B pre-run noise','Ch A post-run noise','Ch B post-run noise');
-% 	l1.Title.String=sprintf('Power Spectral\nDensity [mV^2]');
-%     l1.Title.FontSize=16;
-%     l1.FontSize=14;
-%     l1.Location='northeastoutside';
-% end
-if any(IndexNo2(ii) == [2,3,9,11,12])
-    xline(SCH(IndexNo2(ii)).Festimate,'Color','green','LineWidth',1.8)
-end
+%Ta(ii).XAxis.Label.FontSize=28;
+%Ta(ii).YAxis.Label.FontSize=28;
+Ta(ii).XAxis.TickValues = [1e4,1e5,1e6,1e7];
+Ta(ii).YAxis.TickValues = [1e-7,1e-5,1e-3];
 
 grid on
+
+if any(IndexNo2(ii) == [2,3,9,11,12])
+    xline(M(IndexNo(ii)).Uc.*1000./SCH(IndexNo2(ii)).BLHmm,'Color','green','LineWidth',1.8)
 end
+end
+
 l1 = legend(Ta(1),{'Channel A','Channel B','Ch A pre-run noise',...
     'Ch B pre-run noise','Ch A post-run noise','Ch B post-run noise','U_{edge}/y_{BL}'});
 l1.Title.String=sprintf('Power Spectral\nDensity [mV^2]');
@@ -358,31 +412,44 @@ for ii = 1:length(M)
 end
 
 figtile = figure();
-Tiles = tiledlayout(figtile,4,3,'TileSpacing','Compact');
-ylabel(Tiles,'Frequency [MHz]','FontSize',16)
-xlabel(Tiles,'Time [s]','FontSize',16)
+Tiles = tiledlayout(figtile,3,4,'TileSpacing','Compact');
+ylabel(Tiles,'Frequency [MHz]','FontSize',28)
+xlabel(Tiles,'Time [s]','FontSize',28)
 for ii = 1:length(IndexNo)
 Tb(ii) = nexttile;
-imagesc('XData',tspc{IndexNo(ii)},'YData',fspc{IndexNo(ii)},'CData',mag2db(SPCa{IndexNo(ii)}))
+imagesc('XData',tspc{IndexNo(ii)},'YData',fspc{IndexNo(ii)}./10^6,'CData',log10(SPCa{IndexNo(ii)}))
 colormap jet
 Tb(ii).Title.String = sprintf('Local Re = %0.3G',M(IndexNo(ii)).Re);
-Tb(ii).Title.FontSize=16;
-ylim([-inf,1e6])
+Tb(ii).FontSize=18;
+
+Tb(ii).Title.FontSize=20;
+ylim([-inf,2.5])
+xlim([min(tspc{IndexNo(ii)}),max(tspc{IndexNo(ii)})])
+     caxis([-9,-3])
+if any(ii == [4,8,12])
      cb(ii) = colorbar();
-     cb(ii).Label.String = 'PSD [dB/Hz]';
-     caxis([-200,0])
-%     l1 = legend('Channel A','Channel B','Ch A pre-run noise',...
-%     'Ch B pre-run noise','Ch A post-run noise','Ch B post-run noise');
-% 	l1.Title.String=sprintf('Power Spectral\nDensity [mV^2]');
-%     l1.Title.FontSize=16;
-%     l1.FontSize=14;
-%     l1.Location='northeastoutside';
+     tickvals = cb(ii).Ticks;
+  for jj = 1:length(tickvals)
+      tickname{jj} = sprintf('10^{%.1f}',tickvals(jj));
+  end
+  cb(ii).TickLabels = tickname;
+ cb(ii).Label.String = 'PSD [mV^2/Hz]';
+ cb(ii).Label.FontSize = 18;
+%caxis([-10,-3])
+end
+  
+for ll=0.5:0.5:2.5
+    yline(ll)
+end
+for ll=1:length(Tb(ii).XAxis.TickValues)
+    xline(Tb(ii).XAxis.TickValues(ll))
+end
  
 grid on
 Tb(ii).XMinorGrid='on';Tb(ii).YMinorGrid='on';Tb(ii).GridAlpha=.35;Tb(ii).MinorGridAlpha=.25;
 
 end
-linkaxes([Tb(:)])
+linkaxes([Tb(:)],'y')
 print([ddrive filesep folderpath_r filesep 'SpcGram_V1'],'-dsvg');
 
 figtile = figure();
@@ -421,8 +488,11 @@ for ll=0.06:0.02:0.16
     xline(ll)
 end
 end
-save('SpcGram_V3.mat','figtile','-v7.3')
-linkaxes([Tb(:)])
+linkaxes([Tb(:)],'y')
+
+
+
+%save('SpcGram_V3.mat','figtile','-v7.3')
 print([ddrive filesep folderpath_r filesep 'SpcGram_V2'],'-dsvg')
 
 %% Save everything but images.

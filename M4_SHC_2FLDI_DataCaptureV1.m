@@ -206,7 +206,7 @@ else
     DT = NaN;
 end
 %disturbance velocity, [m/s]
-Uc = (d2)/DT
+Uc = (d2)/DT;
 
 figure(4)
 clf
